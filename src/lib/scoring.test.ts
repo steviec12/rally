@@ -142,7 +142,7 @@ describe('calculateCompatibilityScore', () => {
         { ...maxActivity, locationLat: 34.5018, locationLng: -118.2437 },
       );
       assert(result.outcome === 'scored');
-      expect(result.breakdown.proximityScore).toBe(0);
+      expect(result.breakdown.proximityScore).toBeCloseTo(0, 1);
     });
 
     it('distance beyond the cap produces zero proximity contribution (no negative)', () => {

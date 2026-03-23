@@ -1,5 +1,45 @@
 import type { ScoringUser, ScoringActivity, ScoringResult } from '@/types/scoring';
 
+const MAX_DISTANCE_KM = 50;
+const MAX_ACTIVITY_COUNT = 20;
+const DEFAULT_RATING_SCORE = 50;
+
+function calcTagScore(interests: string[], tags: string[]): number {
+  if (tags.length === 0) return 40;
+  if (interests.length === 0) return 0;
+  const matches = interests.filter((i) => tags.includes(i)).length;
+  return (matches / tags.length) * 40;
+}
+
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function calcProximityScore(
+  userLat: number, userLng: number,
+  actLat: number, actLng: number,
+): number {
+  const dist = haversineKm(userLat, userLng, actLat, actLng);
+  return Math.max(0, (1 - dist / MAX_DISTANCE_KM) * 30);
+}
+
+function calcRatingScore(rating: number | null): number {
+  const raw = rating === null ? DEFAULT_RATING_SCORE : ((rating - 1) / 4) * 100;
+  return (raw / 100) * 20;
+}
+
+function calcActivityCountScore(count: number): number {
+  return (Math.min(count, MAX_ACTIVITY_COUNT) / MAX_ACTIVITY_COUNT) * 10;
+}
+
 export function calculateCompatibilityScore(
   requester: ScoringUser,
   activity: ScoringActivity,
@@ -17,14 +57,22 @@ export function calculateCompatibilityScore(
     return { outcome: 'rejected', reason: 'activity_expired' };
   }
 
+  const tagScore = calcTagScore(requester.interests, activity.tags);
+  const proximityScore = calcProximityScore(
+    requester.locationLat, requester.locationLng,
+    activity.locationLat, activity.locationLng,
+  );
+  const ratingScore = calcRatingScore(requester.rating);
+  const activityCountScore = calcActivityCountScore(requester.activityCount);
+
   return {
     outcome: 'scored',
     breakdown: {
-      total: 0,
-      tagScore: 0,
-      proximityScore: 0,
-      ratingScore: 0,
-      activityCountScore: 0,
+      total: tagScore + proximityScore + ratingScore + activityCountScore,
+      tagScore,
+      proximityScore,
+      ratingScore,
+      activityCountScore,
     },
   };
 }
