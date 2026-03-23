@@ -4,6 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 @AGENTS.md
 @PRD.md
+@mom_test_summary.md
 
 ## Commands
 
@@ -23,8 +24,8 @@ npm run lint     # Run ESLint
 - **Next.js 16.2.1** — App Router (in `src/app/`). See AGENTS.md warning about breaking changes.
 - **TypeScript** — strict mode; path alias `@/*` → `./src/*`
 - **Tailwind CSS v4** — configured via `@tailwindcss/postcss` (no `tailwind.config.js`)
-- **Prisma + Neon (PostgreSQL)** — planned ORM/DB, not yet set up
-- **NextAuth.js** — planned auth (Google OAuth + email), not yet set up
+- **Prisma + Neon (PostgreSQL)** — ORM/DB, not yet set up
+- **NextAuth.js** — auth (Google OAuth + email), not yet set up
 
 ### Data models (from PRD)
 
@@ -34,6 +35,8 @@ npm run lint     # Run ESLint
 - **Rating** — id, raterId, rateeId, activityId, score (1–5)
 
 ### Compatibility scoring algorithm
+
+**Status: implemented and fully tested — 29 passing unit tests (Groups A–D).**
 
 The core differentiator. Produces a 0–100 score per join request:
 
@@ -45,6 +48,25 @@ The core differentiator. Produces a 0–100 score per join request:
 | Requester's completed activity count | 10% |
 
 Key edge cases: new users (no rating/history), no matching tags (minimum score, not zero), user requesting own activity (reject), full activity (block request), past-date activity (hide from feed).
+
+## Product Philosophy
+
+**All features must be grounded in real user problems and observed past behavior — not hypothetical demand.**
+
+Before building any feature, we must be able to answer:
+- Who specifically has this problem? (a findable, reachable person — not "users in general")
+- What are they doing today to solve it, and why does that fail?
+- Have we seen evidence of this behavior, or are we guessing?
+
+This means following The Mom Test principles (see `mom_test_summary.md`):
+
+- **Talk about their life, not your idea.** Understand the workarounds people use today before proposing a solution.
+- **Ask about specifics in the past.** "Tell me about the last time you couldn't find someone to do X with" is more reliable than "would you use an app like this?"
+- **Ideas and feature requests should be understood, not obeyed.** When a user says "I'd want a group chat," dig into the underlying need — they may just want to confirm logistics, which a simpler mechanism could solve.
+- **Validate the who and why before building the what.** A good customer segment is a who-where pair: a specific person in a specific, findable context.
+- **Commitment over compliments.** A stakeholder saying "great idea" is worthless. A person willing to post their first activity or sign up for a waitlist is signal.
+
+When scoping or prioritizing features, apply this gut-check: *What real behavior does this solve, and how do we know it's a real problem?* If we can't answer that with observed evidence, we're building on assumption.
 
 ## Coding Conventions
 
@@ -58,7 +80,7 @@ Key edge cases: new users (no rating/history), no matching tags (minimum score, 
 
 ## Testing Strategy
 
-Use **Vitest** as the test runner. Test files live next to source files with a `.test.ts` extension.
+**Vitest** is configured as the test runner. Test files live next to source files with a `.test.ts` extension.
 
 Follow a strict TDD approach: write a failing test first, implement the minimum code to pass it, then refactor.
 

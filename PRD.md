@@ -8,18 +8,44 @@ Rally is a location-based, activity-first social platform where users post real-
 
 ## Problem Statement
 
-People who want to do activities — hiking, pickup sports, trying a new restaurant, going to a concert — often can't find others to join on short notice. Existing solutions are either:
-- **Too relationship-focused** (Bumble BFF requires building a friendship before doing anything)
-- **Too structured** (Meetup requires organizing formal events with RSVPs)
-- **Too tied to existing social graphs** (Instagram/Facebook only surfaces your current friends)
+People currently reach for the same clunky workarounds when they want to do something and need others to join:
 
-Rally fills the gap for **spontaneous, activity-first matching with strangers**.
+- **Group chats:** Blast "anyone down for a hike Sunday?" to a general group, get ignored or maybe a response from one person, often too late to plan anything.
+- **Instagram stories:** Post a poll or "anyone?" story. Reach is limited to existing followers, response is passive, and there's no way to vet who you'd actually be going with.
+- **Meetup:** Works for highly structured, recurring events (book clubs, hiking clubs) but is friction-heavy for one-off spontaneous plans — you have to create an organization, manage RSVPs, and the UX is built for organizers, not participants.
+- **Facebook Events:** Requires a social graph. You can only reach people you're already connected to, and the format assumes a large, formal invite list.
+- **Just canceling the plan:** The most common outcome. If your usual group can't make it, the activity doesn't happen.
 
-## Target Users
+The failure mode in all these cases is the same: **the tools are built around existing relationships, not around the activity itself.** A person who wants to do something specific — not necessarily with friends, just with someone decent — has no good way to find that person quickly.
 
-- College students looking for activity partners outside their immediate friend group
-- People who recently moved to a new city
-- Anyone whose usual friends aren't available or aren't into a specific activity
+Rally solves this by making the activity the atomic unit: post what you want to do, let compatible strangers discover it, and let the host decide who joins based on a compatibility score — not a social connection.
+
+## Customer Segment
+
+A good customer segment is a who-where pair (per The Mom Test, Chapter 7): a specific person in a specific, findable context.
+
+**Primary segment:** College students (ages 18–24) at mid-to-large universities who want activity partners outside their immediate friend group — especially for physical activities (pickup sports, gym sessions, outdoor runs, intramural-style games) that require a minimum headcount or a partner to be worth doing.
+
+- **Who:** A sophomore or junior who plays pickup basketball, runs, or rock climbs. They have a small but close friend group that doesn't always overlap with their specific interests or availability.
+- **Where:** On campus or near campus — recreation centers, sport courts, trails, gyms, and student-adjacent neighborhoods. This population is geographically dense and activity-infrastructure-rich, making proximity matching highly valuable.
+- **Why they struggle today:** Their go-to move is texting a group chat or posting a story. This works inconsistently — it only reaches people they already know, response rate is low, and it's impossible to vet a stranger through those channels even if someone does respond.
+
+**Secondary segment:** People who recently moved to a new city (ages 22–35) and are rebuilding their activity social circle. They know what they like to do; they just don't have the people yet. They're highly motivated to find activity partners but have no existing local social graph to broadcast to.
+
+- **Where to find them:** "New to [city]" subreddits, Facebook groups for newcomers, Bumble BFF, Meetup event attendees.
+
+## Assumptions to Validate
+
+These are the load-bearing assumptions the product is built on. Each one is a hypothesis until we have real evidence.
+
+| Assumption | Why it matters | How to test it |
+|---|---|---|
+| People actually fail to find activity partners on short notice | The whole premise. If people's existing friend groups reliably work out, Rally has no opening. | Talk to 10–15 people in the primary segment. Ask: "Tell me about the last time you wanted to do [activity] and couldn't find anyone to go with. What did you do?" Don't ask "does this happen to you?" — ask about the last specific time. |
+| The workarounds (group chats, stories) feel broken enough to motivate switching | Even if the problem exists, the workarounds might be "good enough." Switching to a new app is high friction. | In the same conversations: "How'd that work out? Was it good enough, or did it feel like a failure?" Look for frustration, not just acknowledgment. |
+| Hosts are comfortable letting strangers join their activities | If hosts only want to meet people through existing mutual connections, compatibility scoring is irrelevant — they'll never approve an unknown. | Ask hosts: "Have you ever let someone you didn't know join an activity? How did you decide? What made you trust them?" |
+| A compatibility score is a sufficient trust signal for approval | Hosts may want more context (photos, mutual friends, a message) before approving a stranger. The score alone might not be enough. | Show wireframes or a paper prototype to 5 potential hosts. Ask them to react to a scored join request. "Would you approve this? What else would you want to know?" |
+| New users will post an activity before they have an established rating or history | Cold start problem: the value of the feed depends on activities being posted, but new users get low compatibility scores until they've done activities. | Ask potential users: "If you signed up today and had no history, would you post an activity knowing people would see a low compatibility score on your profile?" |
+| Geographic density is sufficient in the target segment | Proximity matching only works if there are enough nearby users. In low-density areas, the pool is too small. | Define "enough": at least 5–10 activities posted per week within 5 miles. Pilot in a geographically dense segment (a large university campus) before expanding. |
 
 ## Tech Stack
 
