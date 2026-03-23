@@ -235,4 +235,79 @@ describe('calculateCompatibilityScore', () => {
       expect(result.breakdown.activityCountScore).toBe(5);
     });
   });
+
+  describe('Group C — Total score composition', () => {
+    const maxUser: ScoringUser = {
+      id: 'user-1',
+      interests: ['basketball', 'running'],
+      locationLat: 34.0522,
+      locationLng: -118.2437,
+      rating: 5,
+      activityCount: 20,
+    };
+
+    const maxActivity: ScoringActivity = {
+      id: 'activity-1',
+      hostId: 'host-1',
+      tags: ['basketball', 'running'],
+      dateTime: new Date('2099-01-01T10:00:00Z'),
+      locationLat: 34.0522,
+      locationLng: -118.2437,
+      maxSpots: 4,
+      approvedCount: 0,
+    };
+
+    it('all factors at maximum produces a total of 100', () => {
+      const result = calculateCompatibilityScore(maxUser, maxActivity);
+      assert(result.outcome === 'scored');
+      expect(result.breakdown.total).toBe(100);
+    });
+
+    it('new user with no history and no tag match produces a non-zero total', () => {
+      const result = calculateCompatibilityScore(
+        { ...maxUser, rating: null, activityCount: 0, interests: ['gaming'] },
+        maxActivity,
+      );
+      assert(result.outcome === 'scored');
+      expect(result.breakdown.total).toBeGreaterThan(0);
+    });
+
+    it('total equals sum of the four weighted contributions', () => {
+      const result = calculateCompatibilityScore(
+        { ...maxUser, rating: 3, activityCount: 10, interests: ['basketball'] },
+        maxActivity,
+      );
+      assert(result.outcome === 'scored');
+      const { total, tagScore, proximityScore, ratingScore, activityCountScore } = result.breakdown;
+      expect(total).toBeCloseTo(tagScore + proximityScore + ratingScore + activityCountScore, 10);
+    });
+
+    it('one spot remaining allows scoring to proceed', () => {
+      const result = calculateCompatibilityScore(
+        maxUser,
+        { ...maxActivity, maxSpots: 3, approvedCount: 2 },
+      );
+      expect(result.outcome).toBe('scored');
+    });
+
+    it('activity one second in the future allows scoring to proceed', () => {
+      const now = new Date('2025-06-01T12:00:00Z');
+      const result = calculateCompatibilityScore(
+        maxUser,
+        { ...maxActivity, dateTime: new Date('2025-06-01T12:00:01Z') },
+        now,
+      );
+      expect(result.outcome).toBe('scored');
+    });
+
+    it('activity one second in the past is rejected as expired', () => {
+      const now = new Date('2025-06-01T12:00:00Z');
+      const result = calculateCompatibilityScore(
+        maxUser,
+        { ...maxActivity, dateTime: new Date('2025-06-01T11:59:59Z') },
+        now,
+      );
+      expect(result).toEqual({ outcome: 'rejected', reason: 'activity_expired' });
+    });
+  });
 });
