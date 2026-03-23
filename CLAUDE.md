@@ -86,9 +86,9 @@ This project follows strict TDD through Claude Code. Every feature must follow t
 Never write implementation code without a failing test first.
 
 Each red-green-refactor cycle is its own set of commits:
-- `test: add failing test for [behavior]`
-- `feat: implement [behavior] to pass test`
-- `refactor: clean up [what was improved]`
+- `test(scope): add failing test for [behavior]`
+- `feat(scope): implement [behavior] to pass test`
+- `refactor(scope): [what was improved]`
 
 For new features, follow the **Explore → Plan → Implement → Commit** workflow:
 1. **EXPLORE** — Understand existing code using Glob, Grep, Read
@@ -98,12 +98,30 @@ For new features, follow the **Explore → Plan → Implement → Commit** workf
 
 Do not combine multiple steps into a single commit. The git history must clearly show the TDD process.
 
+## Git Conventions
+
+Use **conventional commits** format: `type(scope): description`
+
+**Types:** `test`, `feat`, `refactor`, `chore`, `docs`, `fix`
+
+**Scope:** the feature area, e.g. `(scoring)`, `(auth)`, `(activity)`
+
+**TDD commit pattern** — these three commits must never be combined:
+1. `test(scoring): add failing test for [behavior]`
+2. `feat(scoring): implement [behavior] to pass test`
+3. `refactor(scoring): [what was improved]`
+
+**Rules:**
+- Keep messages concise but descriptive
+- Never combine test + implementation in the same commit
+- Push to origin after each complete red-green-refactor cycle
+
 ## Do's and Don'ts
 
 **Do:**
 - Keep scoring logic as pure functions with no database dependencies so they are easily testable
 - Use TypeScript strict mode — no `any` types
-- Write small, focused commits with descriptive messages following the pattern: `test: ...`, `feat: ...`, `refactor: ...`
+- Write small, focused commits with descriptive messages following the pattern: `test(scope): ...`, `feat(scope): ...`, `refactor(scope): ...`
 - Validate all input on the server side
 - Ask for permission before implementing anything — always confirm the plan first
 - Encourage back-and-forth discussion; push back if something is a bad idea
