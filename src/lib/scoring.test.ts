@@ -311,3 +311,51 @@ describe('calculateCompatibilityScore', () => {
     });
   });
 });
+
+describe('Group D — Regression / combination cases', () => {
+  const maxUser: ScoringUser = {
+    id: 'user-1',
+    interests: ['basketball', 'running'],
+    locationLat: 34.0522,
+    locationLng: -118.2437,
+    rating: 5,
+    activityCount: 20,
+  };
+
+  const maxActivity: ScoringActivity = {
+    id: 'activity-1',
+    hostId: 'host-1',
+    tags: ['basketball', 'running'],
+    dateTime: new Date('2099-01-01T10:00:00Z'),
+    locationLat: 34.0522,
+    locationLng: -118.2437,
+    maxSpots: 4,
+    approvedCount: 0,
+  };
+
+  it('max profile, full tag match, but at proximity cap (~50 km) → total is ~70', () => {
+    const result = calculateCompatibilityScore(
+      maxUser,
+      { ...maxActivity, locationLat: 34.5018, locationLng: -118.2437 },
+    );
+    assert(result.outcome === 'scored');
+    expect(result.breakdown.tagScore).toBe(40);
+    expect(result.breakdown.proximityScore).toBeCloseTo(0, 1);
+    expect(result.breakdown.ratingScore).toBe(20);
+    expect(result.breakdown.activityCountScore).toBe(10);
+    expect(result.breakdown.total).toBeCloseTo(70, 0);
+  });
+
+  it('new user (null rating, zero history), full tag match, same location → total is 80', () => {
+    const result = calculateCompatibilityScore(
+      { ...maxUser, rating: null, activityCount: 0 },
+      maxActivity,
+    );
+    assert(result.outcome === 'scored');
+    expect(result.breakdown.tagScore).toBe(40);
+    expect(result.breakdown.proximityScore).toBe(30);
+    expect(result.breakdown.ratingScore).toBe(10);
+    expect(result.breakdown.activityCountScore).toBe(0);
+    expect(result.breakdown.total).toBeCloseTo(80, 10);
+  });
+});
