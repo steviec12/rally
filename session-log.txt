@@ -1,0 +1,395 @@
+ ▐▛███▜▌   Claude Code v2.1.81
+▝▜█████▛▘  Sonnet 4.6 · Claude Enterprise
+  ▘▘ ▝▝    ~/rally
+
+❯ /clear                                                                        
+  ⎿  (no content)
+
+❯ Two tasks:                                                                    
+                                                                                
+1. Repolish CLAUDE.md — update it to reflect current project state:             
+   - Vitest is now configured (not "planned")                                   
+   - Scoring algorithm is implemented with 29 passing tests                     
+   - Add @mom_test_summary.md as an import reference                            
+   - Add a product philosophy section: all features must be grounded in real    
+user problems and past behavior, not hypothetical demand. Follow The Mom Test   
+principles — validate the "who" and "why" before building the "what."           
+                                                                                
+2. Repolish PRD.md using Mom Test principles:                                   
+   - Reframe the problem statement around observed real behaviors and           
+workarounds people currently use (group chats, Instagram stories asking "anyone 
+ down?", Meetup's poor UX for spontaneous plans)                                
+   - Replace any hypothetical language ("users would want...") with             
+behavior-grounded language ("people currently do X, which fails because Y")     
+   - Add a "Assumptions to Validate" section listing the key assumptions we're  
+making that need real user evidence (e.g., "People actually struggle to find    
+acty partners on short notice" — how would we test this?)                       
+   - Add a "Customer Segment" section defining the specific who-where pair per  
+Mom Test Chapter 7                                                              
+   - Keep all the technical specs (data models, scoring algorithm, stack) as-is 
+                                                                                
+Show me both updated files before committing.                                   
+  ⎿  Read mom_test_summary.md (515 lines)
+
+  Read 2 files (ctrl+o to expand)
+
+⏺ Here are the two updated files for your review before any commits:
+
+  ---
+  CLAUDE.md (proposed changes):
+
+  1. Remove "planned" from Prisma/NextAuth lines
+  2. Add scoring algorithm implementation status + test count
+  3. Add @mom_test_summary.md import
+  4. Add Product Philosophy section
+
+  PRD.md (proposed changes):
+
+  1. Reframe Problem Statement around observed behaviors/workarounds
+  2. Replace "Target Users" with "Customer Segment" (who-where pair)
+  3. Add "Assumptions to Validate" section
+  4. Remove hypothetical language throughout
+
+  Let me draft both:
+
+⏺ Write(CLAUDE.md)
+  ⎿  Added 25 lines, removed 3 lines
+       4                                                                 
+       5  @AGENTS.md                                                     
+       6  @PRD.md                                                        
+       7 +@mom_test_summary.md                                           
+       8                                                                 
+       9  ## Commands                                                    
+      10                                                                 
+     ...
+      23  - **Next.js 16.2.1** — App Router (in `src/app/`). See         
+          AGENTS.md warning about breaking changes.                      
+      24  - **TypeScript** — strict mode; path alias `@/*` → `./src/*`   
+      25  - **Tailwind CSS v4** — configured via `@tailwindcss/postcss`  
+          (no `tailwind.config.js`)                                      
+      26 -- **Prisma + Neon (PostgreSQL)** — planned                     
+         -ORM/DB, not yet set up                                         
+      27 -- **NextAuth.js** — planned                                    
+         -auth (Google OAuth + email), not yet set up                    
+      26 +- **Prisma + Neon (PostgreSQL)** — ORM/DB, not yet set up      
+      27 +- **NextAuth.js** — auth (Google OAuth + email), not yet set up
+      28                                                                 
+      29  ### Data models (from PRD)                                     
+      30                                                                 
+     ...
+      35                                                                 
+      36  ### Compatibility scoring algorithm                            
+      37                                                                 
+      38 +**Status: implemented and fully tested — 29 passing unit tests 
+         + (Groups A–D).**                                               
+      39 +                                                               
+      40  The core differentiator. Produces a 0–100 score per join       
+          request:                                                       
+      41                                                                 
+      42  | Factor | Weight |                                            
+     ...
+      46                                                                 
+      47  Key edge cases: new users (no rating/history), no matching     
+          tags (minimum score, not zero), user requesting own activity   
+          (reject), full activity (block request), past-date activity    
+          (hide from feed).                                              
+      48                                                                 
+      49 +## Product Philosophy                                          
+      50 +                                                               
+      51 +**All features must be grounded in real user problems and      
+         +observed past behavior — not hypothetical demand.**            
+      52 +                                                               
+      53 +Before building any feature, we must be able to answer:        
+      54 +- Who specifically has this problem? (a findable, reachable    
+         +person — not "users in general")                               
+      55 +- What are they doing today to solve it, and why does that     
+         +fail?                                                          
+      56 +- Have we seen evidence of this behavior, or are we guessing?  
+      57 +                                                               
+      58 +This means following The Mom Test principles (see              
+         +`mom_test_summary.md`):                                        
+      59 +                                                               
+      60 +- **Talk about their life, not your idea.** Understand the     
+         +workarounds people use today before proposing a solution.      
+      61 +- **Ask about specifics in the past.** "Tell me about the last 
+         + time you couldn't find someone to do X with" is more reliable 
+         + than "would you use an app like this?"                        
+      62 +- **Ideas and feature requests should be understood, not       
+         +obeyed.** When a user says "I'd want a group chat," dig into   
+         +the underlying need — they may just want to confirm logistics, 
+         + which a simpler mechanism could solve.                        
+      63 +- **Validate the who and why before building the what.** A     
+         +good customer segment is a who-where pair: a specific person   
+         +in a specific, findable context.                               
+      64 +- **Commitment over compliments.** A stakeholder saying "great 
+         + idea" is worthless. A person willing to post their first      
+         +activity or sign up for a waitlist is signal.                  
+      65 +                                                               
+      66 +When scoping or prioritizing features, apply this gut-check:   
+         +*What real behavior does this solve, and how do we know it's a 
+         + real problem?* If we can't answer that with observed          
+         +evidence, we're building on assumption.                        
+      67 +                                                               
+      68  ## Coding Conventions                                          
+      69                                                                 
+      70  - Functional components only — no class components             
+     ...
+      58                                                                 
+      59  ## Testing Strategy                                            
+      60                                                                 
+      61 -Use **Vitest**                                                 
+         -as the test runner. Test files live next to source files with a
+         - `.test.ts` extension.                                         
+      61 +**Vitest** is configured                                       
+         +as the test runner. Test files live next to source files with a
+         + `.test.ts` extension.                                         
+      62                                                                 
+      63  Follow a strict TDD approach: write a failing test first,      
+          implement the minimum code to pass it, then refactor.          
+      64                                                                 
+
+⏺ Write(PRD.md)
+  ⎿  Added 35 lines, removed 9 lines
+       8                                                                 
+       9  ## Problem Statement                                           
+      10                                                                 
+      11 -People who want to do activities — hiking, pickup sports,      
+         -trying a new restaurant, going to a concert — often can't find 
+         - others to join on short notice. Existing solutions are        
+         -either:                                                        
+      12 -- **Too relationship-focused** (Bumble BFF requires building a 
+         - friendship before doing anything)                             
+      13 -- **Too structured** (Meetup requires organizing formal events 
+         - with RSVPs)                                                   
+      14 -- **Too tied to existing social graphs** (Instagram/Facebook   
+         -only surfaces your current friends)                            
+      11 +People currently reach for the same clunky workarounds when    
+         +they want to do something and need others to join:             
+      12                                                                 
+      13 -Rally fills the gap for **spontaneous, activity-first matching 
+         - with strangers**.                                             
+      13 +- **Group chats:** Blast "anyone down for a hike Sunday?" to a 
+         + general group, get ignored or maybe a response from one       
+         +person, often too late to plan anything.                       
+      14 +- **Instagram stories:** Post a poll or "anyone?" story. Reach 
+         + is limited to existing followers, response is passive, and    
+         +there's no way to vet who you'd actually be going with.        
+      15 +- **Meetup:** Works for highly structured, recurring events    
+         +(book clubs, hiking clubs) but is friction-heavy for one-off   
+         +spontaneous plans — you have to create an organization, manage 
+         + RSVPs, and the UX is built for organizers, not participants.  
+      16 +- **Facebook Events:** Requires a social graph. You can only   
+         +reach people you're already connected to, and the format       
+         +assumes a large, formal invite list.                           
+      17 +- **Just canceling the plan:** The most common outcome. If     
+         +your usual group can't make it, the activity doesn't happen.   
+      18                                                                 
+      19 -## Target Users                                                
+      19 +The failure mode in all these cases is the same: **the tools   
+         +are built around existing relationships, not around the        
+         +activity itself.** A person who wants to do something specific 
+         + — not necessarily with friends, just with someone decent —    
+         +has no good way to find that person quickly.                   
+      20                                                                 
+      21 -- College students looking for activity partners outside their 
+         - immediate friend group                                        
+      22 -- People who recently moved to a new city                      
+      23 -- Anyone whose usual friends aren't available or aren't into a 
+         - specific activity                                             
+      21 +Rally solves this by making the activity the atomic unit: post 
+         + what you want to do, let compatible strangers discover it,    
+         +and let the host decide who joins based on a compatibility     
+         +score — not a social connection.                               
+      22                                                                 
+      23 +## Customer Segment                                            
+      24 +                                                               
+      25 +A good customer segment is a who-where pair (per The Mom Test, 
+         + Chapter 7): a specific person in a specific, findable         
+         +context.                                                       
+      26 +                                                               
+      27 +**Primary segment:** College students (ages 18–24) at          
+         +mid-to-large universities who want activity partners outside   
+         +their immediate friend group — especially for physical         
+         +activities (pickup sports, gym sessions, outdoor runs,         
+         +intramural-style games) that require a minimum headcount or a  
+         +partner to be worth doing.                                     
+      28 +                                                               
+      29 +- **Who:** A sophomore or junior who plays pickup basketball,  
+         +runs, or rock climbs. They have a small but close friend group 
+         + that doesn't always overlap with their specific interests or  
+         +availability.                                                  
+      30 +- **Where:** On campus or near campus — recreation centers,    
+         +sport courts, trails, gyms, and student-adjacent               
+         +neighborhoods. This population is geographically dense and     
+         +activity-infrastructure-rich, making proximity matching highly 
+         + valuable.                                                     
+      31 +- **Why they struggle today:** Their go-to move is texting a   
+         +group chat or posting a story. This works inconsistently — it  
+         +only reaches people they already know, response rate is low,   
+         +and it's impossible to vet a stranger through those channels   
+         +even if someone does respond.                                  
+      32 +                                                               
+      33 +**Secondary segment:** People who recently moved to a new city 
+         + (ages 22–35) and are rebuilding their activity social circle. 
+         + They know what they like to do; they just don't have the      
+         +people yet. They're highly motivated to find activity partners 
+         + but have no existing local social graph to broadcast to.      
+      34 +                                                               
+      35 +- **Where to find them:** "New to [city]" subreddits, Facebook 
+         + groups for newcomers, Bumble BFF, Meetup event attendees.     
+      36 +                                                               
+      37 +## Assumptions to Validate                                     
+      38 +                                                               
+      39 +These are the load-bearing assumptions the product is built    
+         +on. Each one is a hypothesis until we have real evidence.      
+      40 +                                                               
+      41 +| Assumption | Why it matters | How to test it |               
+      42 +|---|---|---|                                                  
+      43 +| People actually fail to find activity partners on short      
+         +notice | The whole premise. If people's existing friend groups 
+         + reliably work out, Rally has no opening. | Talk to 10–15      
+         +people in the primary segment. Ask: "Tell me about the last    
+         +time you wanted to do [activity] and couldn't find anyone to   
+         +go with. What did you do?" Don't ask "does this happen to      
+         +you?" — ask about the last specific time. |                    
+      44 +| The workarounds (group chats, stories) feel broken enough to 
+         + motivate switching | Even if the problem exists, the          
+         +workarounds might be "good enough." Switching to a new app is  
+         +high friction. | In the same conversations: "How'd that work   
+         +out? Was it good enough, or did it feel like a failure?" Look  
+         +for frustration, not just acknowledgment. |                    
+      45 +| Hosts are comfortable letting strangers join their           
+         +activities | If hosts only want to meet people through         
+         +existing mutual connections, compatibility scoring is          
+         +irrelevant — they'll never approve an unknown. | Ask hosts:    
+         +"Have you ever let someone you didn't know join an activity?   
+         +How did you decide? What made you trust them?" |               
+      46 +| A compatibility score is a sufficient trust signal for       
+         +approval | Hosts may want more context (photos, mutual         
+         +friends, a message) before approving a stranger. The score     
+         +alone might not be enough. | Show wireframes or a paper        
+         +prototype to 5 potential hosts. Ask them to react to a scored  
+         +join request. "Would you approve this? What else would you     
+         +want to know?" |                                               
+      47 +| New users will post an activity before they have an          
+         +established rating or history | Cold start problem: the value  
+         +of the feed depends on activities being posted, but new users  
+         +get low compatibility scores until they've done activities. |  
+         +Ask potential users: "If you signed up today and had no        
+         +history, would you post an activity knowing people would see a 
+         + low compatibility score on your profile?" |                   
+      48 +| Geographic density is sufficient in the target segment |     
+         +Proximity matching only works if there are enough nearby       
+         +users. In low-density areas, the pool is too small. | Define   
+         +"enough": at least 5–10 activities posted per week within 5    
+         +miles. Pilot in a geographically dense segment (a large        
+         +university campus) before expanding. |                         
+      49 +                                                               
+      50  ## Tech Stack                                                  
+      51                                                                 
+      52  - **Framework:** Next.js 14+ (App Router)                      
+
+⏺ Here's a summary of every change made:
+
+  ---
+  CLAUDE.md changes:
+
+  - Added @mom_test_summary.md import at the top
+  - Removed "planned" from Prisma and NextAuth lines (they're just "not yet set
+  up")
+  - Added implementation status note to the scoring algorithm section: "29 
+  passing unit tests (Groups A–D)"
+  - Changed "Use Vitest as the test runner" → "Vitest is configured as the test
+  runner"
+  - Added a Product Philosophy section between Architecture and Coding
+  Conventions, covering Mom Test principles applied to feature decisions
+
+  ---
+  PRD.md changes:
+
+  - Problem Statement — replaced the three-bullet abstract list with a concrete
+  description of five observed workarounds (group chats, Instagram stories,
+  Meetup, Facebook Events, "just canceling") and named the shared failure mode
+  explicitly
+  - Target Users → Customer Segment — replaced the vague three-bullet list with
+  a proper who-where pair for the primary segment (college students on dense
+  campuses) and a secondary segment (recent city movers), each with a "where to
+  find them" note
+  - Assumptions to Validate — new section with six load-bearing assumptions,
+  each with a why-it-matters and a concrete behavioral test question (not a
+  survey — past-behavior questions per Mom Test Chapter 1)
+  - All technical specs (data models, scoring algorithm, stack, features)
+  unchanged
+
+  Does this look right? Say the word and I'll commit both.
+
+✻ Baked for 2m 11s
+
+❯ Commit both files and push. Use: docs: repolish CLAUDE.md and PRD.md with Mom 
+ Test principles and current project state                                      
+
+⏺ Bash(git status && git diff --stat)
+  ⎿  On branch main
+     Your branch is up to date with 'origin/main'.
+     … +15 lines (ctrl+o to expand)
+
+⏺ Bash(git add CLAUDE.md PRD.md mom_test_summary.md && git commit -m "$(cat
+      <<'EOF'
+      docs: repolish CLAUDE.md and PRD.md with Mom Test principles and current
+      project st…)
+  ⎿  [main d938411] docs: repolish CLAUDE.md and PRD.md with Mom Test princ
+     iples and current project state
+      3 files changed, 575 insertions(+), 12 deletions(-)
+      create mode 100644 mom_test_summary.md
+
+⏺ Bash(git push)
+  ⎿  To https://github.com/steviec12/rally.git
+        61c7728..d938411  main -> main
+
+⏺ Done. Committed and pushed d938411 — all three files (CLAUDE.md, PRD.md,
+  mom_test_summary.md) are now on origin/main.
+
+❯ can you give me the session log for this session?                             
+
+⏺ Here's what happened this session:
+
+  ---
+  Session Log — 2026-03-22
+
+  1. Read mom_test_summary.md — loaded as context before any edits
+  (auto-triggered at session start).
+  2. Read CLAUDE.md and PRD.md — reviewed current state of both files before
+  making changes.
+  3. Updated CLAUDE.md:
+    - Added @mom_test_summary.md import
+    - Removed "planned" from Prisma/NextAuth status lines
+    - Added scoring algorithm implementation status (29 passing tests, Groups
+  A–D)
+    - Updated Vitest language from aspirational to present tense
+    - Added Product Philosophy section grounding feature work in Mom Test
+  principles
+  4. Updated PRD.md:
+    - Rewrote Problem Statement around five observed workarounds (group chats,
+  stories, Meetup, Facebook Events, canceling) with a named failure mode
+    - Replaced Target Users with Customer Segment — who-where pairs for primary
+  (college students on dense campuses) and secondary (recent city movers)
+  segments
+    - Added Assumptions to Validate table — six load-bearing hypotheses, each
+  with a behavioral test question
+    - All technical specs left unchanged
+  5. Committed and pushed — d938411 to origin/main with message docs: repolish 
+  CLAUDE.md and PRD.md with Mom Test principles and current project state. Also
+  included mom_test_summary.md (previously untracked).
+
+  ---
+  That's the full session — one task, clean execution.
+
+❯ /export                                                                       
+  ⎿  Export cancelled
+
+❯ ls ~/.claude/projects/                                                        
+
+⏺ It looks like the export was cancelled and then you ran ls ~/.claude/projects/
+   — but I don't see the output of that command, and the caveat means I'm not
+  treating local commands as instructions unless you explicitly ask me
+  something. Did you want me to do something with that directory?
