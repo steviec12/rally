@@ -68,6 +68,52 @@ This means following The Mom Test principles (see `mom_test_summary.md`):
 
 When scoping or prioritizing features, apply this gut-check: *What real behavior does this solve, and how do we know it's a real problem?* If we can't answer that with observed evidence, we're building on assumption.
 
+## Design System
+
+**Brand:** Gen Z, party energy, joyful. Neon fuchsia + violet on soft blush.
+
+**Reference prototype:** `docs/design/landing-prototype.html` — treat this as the visual source of truth.
+
+### Colors
+
+| Role | Token | Hex |
+|---|---|---|
+| Primary | fuchsia | `#FF2D9B` |
+| Primary Dark | fuchsia-dark | `#E01B85` |
+| Primary Light | fuchsia-light | `#FF5CB5` |
+| Primary Bg | fuchsia-bg | `#FFF0F8` |
+| Secondary | violet | `#8B5CF6` |
+| Secondary Bg | violet-bg | `#F3EEFF` |
+| Accent | sunny | `#FFCA28` |
+| Accent | sky | `#38BDF8` |
+| Accent | mint | `#2DD4A8` |
+| Accent | peach | `#FF8C69` |
+| Background | — | `#FFFAFE` |
+| Surface | — | `#FFFFFF` |
+| Border | — | `#F3E4EE` |
+| Text Primary | — | `#1E0A1B` |
+| Text Secondary | — | `#5C4558` |
+| Text Muted | — | `#A693A2` |
+
+### Typography
+
+- **Headings:** Outfit, weight 800–900
+- **Body:** DM Sans, weight 400–700
+
+### Shape & Shadow
+
+- **Cards:** `border-radius: 20px`
+- **Small elements:** `border-radius: 12px`
+- **Pills/tags:** `border-radius: 100px`
+- **Hover shadows:** fuchsia-tinted glows (not plain grey box-shadows)
+
+### Gradient
+
+Highlight text and accent elements use:
+```css
+linear-gradient(135deg, #FF2D9B, #8B5CF6)
+```
+
 ## Coding Conventions
 
 - Functional components only — no class components
@@ -98,27 +144,36 @@ HW4 focus: unit tests on the scoring algorithm via TDD. Integration and E2E are 
 
 ## Development Workflow
 
-This project follows strict TDD through Claude Code. Every feature must follow the red-green-refactor cycle:
+Each issue is implemented on its own branch. **Never push directly to `main`.** All work merges via pull request only, after validation and testing.
+
+### Per-issue workflow
+
+1. **EXPLORE** — Read the issue. Understand existing code using Glob, Grep, Read.
+2. **PLAN** — Design the approach in Plan mode. Get sign-off before writing any code.
+3. **BRANCH** — Create a branch named `feature/R-XXX-short-description` (e.g. `feature/R-001-google-oauth`).
+4. **IMPLEMENT** — Execute following TDD where applicable (see below).
+5. **COMMIT** — Clean commits with conventional commit messages on the feature branch.
+6. **PR** — Open a pull request to `main`. Validate and test before merging.
+7. **MERGE** — Merge only after PR review passes. Never squash TDD commit history.
+
+### TDD — apply when possible, skip when not
+
+Apply the red-green-refactor cycle for all **pure logic and business rules** (scoring, validation, data transforms):
 
 1. **RED** — Write a failing test that defines the expected behavior
 2. **GREEN** — Write the minimum code to make the test pass — nothing more
 3. **REFACTOR** — Clean up the code while keeping tests green
-4. Repeat for the next piece of behavior
 
-Never write implementation code without a failing test first.
-
-Each red-green-refactor cycle is its own set of commits:
+Each cycle is its own commit set — never combined:
 - `test(scope): add failing test for [behavior]`
 - `feat(scope): implement [behavior] to pass test`
 - `refactor(scope): [what was improved]`
 
-For new features, follow the **Explore → Plan → Implement → Commit** workflow:
-1. **EXPLORE** — Understand existing code using Glob, Grep, Read
-2. **PLAN** — Use Claude Code Plan mode to design the approach before writing any code
-3. **IMPLEMENT** — Execute following TDD
-4. **COMMIT** — Create clean commits with meaningful messages
+**Skip TDD when it doesn't apply** — e.g. OAuth flows, third-party auth redirects, UI components, and external integrations that can't be meaningfully unit tested. For these, write integration or E2E tests where practical, or test manually and document what was validated in the PR.
 
-Do not combine multiple steps into a single commit. The git history must clearly show the TDD process.
+### Branch naming
+
+`feature/R-XXX-short-description` — e.g. `feature/R-001-google-oauth`, `feature/R-005-create-activity`
 
 ## Git Conventions
 
@@ -137,6 +192,7 @@ Use **conventional commits** format: `type(scope): description`
 - Keep messages concise but descriptive
 - Never combine test + implementation in the same commit
 - Push to origin after each complete red-green-refactor cycle
+- **Never push directly to `main`** — all changes go through a PR on a feature branch
 
 ## Do's and Don'ts
 
