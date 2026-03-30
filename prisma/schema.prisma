@@ -53,6 +53,7 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?   // NextAuth field name; PRD calls it "avatar"
+  password      String?   // null for OAuth-only users
   bio           String?
   interests     String[]
   location      String?
