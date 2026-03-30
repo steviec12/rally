@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import SignInButton from "@/app/components/sign-in-button";
 import SignOutButton from "@/app/components/sign-out-button";
+import AuthForm from "@/app/components/auth-form";
 import Image from "next/image";
 
 export default async function Home() {
@@ -152,6 +153,8 @@ export default async function Home() {
             </div>
 
             <SignInButton />
+
+            <AuthForm />
 
             <p style={{ fontSize: 12, color: "var(--text-muted)", textAlign: "center" }}>
               By continuing, you agree to Rally&apos;s terms of service
