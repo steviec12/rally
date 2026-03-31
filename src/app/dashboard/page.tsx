@@ -131,6 +131,23 @@ export default async function DashboardPage() {
         {/* Actions */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%" }}>
           <Link
+            href="/activities/new"
+            style={{
+              display: "block",
+              textAlign: "center",
+              padding: "12px",
+              borderRadius: "12px",
+              background: "linear-gradient(135deg, var(--fuchsia), var(--violet))",
+              color: "#fff",
+              fontFamily: "var(--font-body)",
+              fontWeight: 700,
+              fontSize: 15,
+              textDecoration: "none",
+            }}
+          >
+            + Create activity
+          </Link>
+          <Link
             href="/profile"
             style={{
               display: "block",
