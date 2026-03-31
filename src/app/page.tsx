@@ -1,11 +1,11 @@
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import SignInButton from "@/app/components/sign-in-button";
-import SignOutButton from "@/app/components/sign-out-button";
 import AuthForm from "@/app/components/auth-form";
-import Image from "next/image";
 
 export default async function Home() {
   const session = await auth();
+  if (session?.user) redirect("/dashboard");
 
   return (
     <main
@@ -74,64 +74,6 @@ export default async function Home() {
           </span>
         </div>
 
-        {session?.user ? (
-          /* ── Signed-in state ── */
-          <>
-            {session.user.image && (
-              <Image
-                src={session.user.image}
-                alt={session.user.name ?? "User avatar"}
-                width={64}
-                height={64}
-                className="rounded-full"
-                style={{ border: "3px solid var(--fuchsia-bg)" }}
-              />
-            )}
-            <div className="flex flex-col items-center gap-1 text-center">
-              <p
-                style={{
-                  fontFamily: "var(--font-outfit), sans-serif",
-                  fontWeight: 800,
-                  fontSize: 22,
-                  color: "var(--text-primary)",
-                  letterSpacing: "-0.5px",
-                }}
-              >
-                Welcome back, {session.user.name?.split(" ")[0]} 👋
-              </p>
-              <p style={{ fontSize: 14, color: "var(--text-muted)" }}>
-                {session.user.email}
-              </p>
-            </div>
-
-            {/* Activity count badge */}
-            <div
-              className="flex items-center gap-2 px-4 py-2 rounded-full"
-              style={{
-                background: "var(--fuchsia-bg)",
-                border: "1px solid rgba(255,45,155,0.15)",
-              }}
-            >
-              <span style={{ fontSize: 13, fontWeight: 700, color: "var(--fuchsia)" }}>
-                0 activities completed
-              </span>
-            </div>
-
-            <div className="flex flex-col gap-3 w-full">
-              <button
-                className="w-full py-3 rounded-full font-['Outfit'] font-bold text-base text-white transition-all duration-300 hover:scale-105 hover:-translate-y-0.5"
-                style={{
-                  background: "var(--fuchsia)",
-                  boxShadow: "var(--shadow-btn)",
-                }}
-              >
-                Go to dashboard →
-              </button>
-              <SignOutButton />
-            </div>
-          </>
-        ) : (
-          /* ── Signed-out state ── */
           <>
             <div className="flex flex-col items-center gap-2 text-center">
               <h1
@@ -160,7 +102,6 @@ export default async function Home() {
               By continuing, you agree to Rally&apos;s terms of service
             </p>
           </>
-        )}
       </div>
 
       <style>{`
