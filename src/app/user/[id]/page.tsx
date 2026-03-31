@@ -1,16 +1,16 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import Link from "next/link";
 import Image from "next/image";
-import SignOutButton from "@/app/components/sign-out-button";
 
-export default async function DashboardPage() {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/");
+interface Props {
+  params: Promise<{ id: string }>;
+}
+
+export default async function PublicProfilePage({ params }: Props) {
+  const { id } = await params;
 
   const user = await db.user.findUnique({
-    where: { id: session.user.id },
+    where: { id },
     select: {
       name: true,
       bio: true,
@@ -22,7 +22,7 @@ export default async function DashboardPage() {
     },
   });
 
-  if (!user) redirect("/");
+  if (!user) notFound();
 
   return (
     <main
@@ -60,13 +60,19 @@ export default async function DashboardPage() {
           }}
         >
           {user.image ? (
-            <Image src={user.image} alt={user.name ?? "Avatar"} fill style={{ objectFit: "cover" }} unoptimized />
+            <Image
+              src={user.image}
+              alt={user.name ?? "Avatar"}
+              fill
+              style={{ objectFit: "cover" }}
+              unoptimized
+            />
           ) : (
             <span style={{ fontSize: 28 }}>👤</span>
           )}
         </div>
 
-        {/* Name & bio */}
+        {/* Name, location, bio */}
         <div style={{ textAlign: "center" }}>
           <h1
             style={{
@@ -77,13 +83,22 @@ export default async function DashboardPage() {
               letterSpacing: "-0.5px",
             }}
           >
-            {user.name ?? "No name set"}
+            {user.name ?? "Anonymous"}
           </h1>
           {user.location && (
-            <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 2 }}>📍 {user.location}</p>
+            <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 2 }}>
+              📍 {user.location}
+            </p>
           )}
           {user.bio && (
-            <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 8, lineHeight: 1.5 }}>
+            <p
+              style={{
+                fontSize: 14,
+                color: "var(--text-secondary)",
+                marginTop: 8,
+                lineHeight: 1.5,
+              }}
+            >
               {user.bio}
             </p>
           )}
@@ -113,58 +128,47 @@ export default async function DashboardPage() {
         )}
 
         {/* Stats */}
-        <div style={{ display: "flex", gap: 16 }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 24,
+            padding: "12px 24px",
+            borderRadius: 12,
+            background: "var(--fuchsia-bg)",
+            border: "1px solid rgba(255,45,155,0.1)",
+          }}
+        >
           <div style={{ textAlign: "center" }}>
-            <p style={{ fontFamily: "var(--font-outfit)", fontWeight: 800, fontSize: 20, color: "var(--fuchsia)" }}>
+            <p
+              style={{
+                fontFamily: "var(--font-outfit), sans-serif",
+                fontWeight: 800,
+                fontSize: 22,
+                color: "var(--fuchsia)",
+              }}
+            >
               {user.activityCount}
             </p>
-            <p style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-body)" }}>activities</p>
-          </div>
-          <div style={{ textAlign: "center" }}>
-            <p style={{ fontFamily: "var(--font-outfit)", fontWeight: 800, fontSize: 20, color: "var(--fuchsia)" }}>
-              {user.rating ? user.rating.toFixed(1) : "—"}
+            <p style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-body)" }}>
+              activities
             </p>
-            <p style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-body)" }}>rating</p>
           </div>
-        </div>
-
-        {/* Actions */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%" }}>
-          <Link
-            href="/profile"
-            style={{
-              display: "block",
-              textAlign: "center",
-              padding: "12px",
-              borderRadius: "12px",
-              background: "linear-gradient(135deg, var(--fuchsia), var(--violet))",
-              color: "#fff",
-              fontFamily: "var(--font-body)",
-              fontWeight: 700,
-              fontSize: 15,
-              textDecoration: "none",
-            }}
-          >
-            Edit profile
-          </Link>
-          <Link
-            href={`/user/${session.user.id}`}
-            style={{
-              display: "block",
-              textAlign: "center",
-              padding: "12px",
-              borderRadius: "12px",
-              border: "2px solid var(--border)",
-              color: "var(--text-secondary)",
-              fontFamily: "var(--font-body)",
-              fontWeight: 600,
-              fontSize: 15,
-              textDecoration: "none",
-            }}
-          >
-            View public profile
-          </Link>
-          <SignOutButton />
+          <div style={{ width: 1, background: "rgba(255,45,155,0.15)" }} />
+          <div style={{ textAlign: "center" }}>
+            <p
+              style={{
+                fontFamily: "var(--font-outfit), sans-serif",
+                fontWeight: 800,
+                fontSize: 22,
+                color: "var(--fuchsia)",
+              }}
+            >
+              {user.rating ? user.rating.toFixed(1) : "New"}
+            </p>
+            <p style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-body)" }}>
+              {user.rating ? "rating" : "no ratings yet"}
+            </p>
+          </div>
         </div>
       </div>
     </main>
