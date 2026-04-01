@@ -77,7 +77,7 @@ Never skip these. If a stage is reached without running the required agent, stop
 2. **PLAN** — Design the approach in Plan mode. Get sign-off before writing any code.
 3. **BRANCH** — Create a branch named `feature/R-XXX-short-description` (e.g. `feature/R-001-google-oauth`).
 4. **IMPLEMENT** — Execute following TDD where applicable. Use `tdd-runner` agent for all pure logic.
-5. **REVIEW** — Run `code-reviewer` agent on all changed files. Fix any critical or warning issues.
+5. **REVIEW** — Run `code-reviewer` agent on all changed files. **Do NOT proceed to step 6 until all critical and warning issues are fixed.**
 6. **CHECKLIST** — Run automated checks (`npm run lint`, `npx tsc --noEmit`, `npm run test`). Give the user a step-by-step manual testing checklist. **STOP here — do NOT commit or proceed until the user explicitly confirms manual tests passed. No exceptions.**
 7. **COMMIT** — Only after user confirmation. Clean commits with conventional commit messages on the feature branch.
 8. **VALIDATE** — Run `pr-validator` agent.
