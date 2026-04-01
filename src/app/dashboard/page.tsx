@@ -24,6 +24,14 @@ export default async function DashboardPage() {
 
   if (!user) redirect("/");
 
+  const activities = await db.activity.findMany({
+    where: { hostId: session.user.id },
+    orderBy: { dateTime: "asc" },
+    select: { id: true, title: true, dateTime: true, status: true },
+  });
+
+  const now = new Date();
+
   return (
     <main
       className="flex flex-col items-center justify-center min-h-screen px-4 py-10"
@@ -127,6 +135,78 @@ export default async function DashboardPage() {
             <p style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-body)" }}>rating</p>
           </div>
         </div>
+
+        {/* Your activities */}
+        {activities.length > 0 && (
+          <div style={{ width: "100%", borderTop: "1px solid var(--border)", paddingTop: 16 }}>
+            <p
+              style={{
+                fontFamily: "var(--font-outfit), sans-serif",
+                fontWeight: 800,
+                fontSize: 13,
+                color: "var(--text-muted)",
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
+                marginBottom: 10,
+              }}
+            >
+              Your activities
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {activities.map((a) => {
+                const editable = a.dateTime > now && a.status !== "cancelled";
+                return (
+                  <div
+                    key={a.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 8,
+                    }}
+                  >
+                    <div style={{ minWidth: 0 }}>
+                      <p
+                        style={{
+                          fontFamily: "var(--font-body)",
+                          fontWeight: 600,
+                          fontSize: 14,
+                          color: "var(--text-primary)",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {a.title}
+                      </p>
+                      <p style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--text-muted)" }}>
+                        {new Date(a.dateTime).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                      </p>
+                    </div>
+                    {editable && (
+                      <Link
+                        href={`/activities/${a.id}/edit`}
+                        style={{
+                          flexShrink: 0,
+                          fontSize: 12,
+                          fontFamily: "var(--font-body)",
+                          fontWeight: 600,
+                          color: "var(--fuchsia)",
+                          textDecoration: "none",
+                          padding: "4px 10px",
+                          borderRadius: "100px",
+                          border: "1.5px solid var(--fuchsia)",
+                        }}
+                      >
+                        Edit
+                      </Link>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Actions */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%" }}>

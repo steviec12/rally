@@ -3,10 +3,26 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { validateActivityInput, sanitizeTags } from "@/lib/activity";
 
-export async function POST(req: Request) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  const activity = await db.activity.findUnique({ where: { id } });
+  if (!activity) {
+    return NextResponse.json({ error: "Activity not found." }, { status: 404 });
+  }
+  if (activity.hostId !== session.user.id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  if (activity.dateTime <= new Date()) {
+    return NextResponse.json({ error: "This activity has already started and cannot be edited." }, { status: 403 });
+  }
+  if (activity.status === "cancelled") {
+    return NextResponse.json({ error: "Cancelled activities cannot be edited." }, { status: 403 });
   }
 
   let body: unknown;
@@ -23,19 +39,17 @@ export async function POST(req: Request) {
 
   const b = body as Record<string, unknown>;
 
-  const activity = await db.activity.create({
+  const updated = await db.activity.update({
+    where: { id },
     data: {
-      hostId: session.user.id,
       title: (b.title as string).trim(),
       tags: sanitizeTags(b.tags),
       dateTime: new Date(b.dateTime as string),
       location: (b.location as string).trim(),
-      locationLat: 0,
-      locationLng: 0,
       maxSpots: b.maxSpots as number,
       description: typeof b.description === "string" ? b.description.trim() || null : null,
     },
   });
 
-  return NextResponse.json(activity, { status: 201 });
+  return NextResponse.json(updated);
 }
