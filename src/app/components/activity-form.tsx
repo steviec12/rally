@@ -5,22 +5,38 @@ import { useRouter } from "next/navigation";
 
 type Field = "title" | "dateTime" | "location" | "spots" | "tags" | "description" | null;
 
-export default function ActivityForm() {
+type InitialData = {
+  id: string;
+  title: string;
+  tags: string[];
+  dateTime: string;
+  location: string;
+  maxSpots: number;
+  description?: string | null;
+};
+
+export default function ActivityForm({ initialData }: { initialData?: InitialData }) {
   const router = useRouter();
   const dateInputRef = useRef<HTMLInputElement>(null);
 
-  const [title, setTitle] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
+  // Convert stored ISO dateTime to datetime-local format (YYYY-MM-DDTHH:mm) in UTC,
+  // consistent with how minDateTime is derived and how the form submits values.
+  const toLocalInput = (iso: string) => new Date(iso).toISOString().slice(0, 16);
+
+  const [title, setTitle] = useState(initialData?.title ?? "");
+  const [tags, setTags] = useState<string[]>(initialData?.tags ?? []);
   const [tagInput, setTagInput] = useState("");
-  const [dateTime, setDateTime] = useState("");
-  const [location, setLocation] = useState("");
-  const [maxSpots, setMaxSpots] = useState(2);
-  const [description, setDescription] = useState("");
+  const [dateTime, setDateTime] = useState(initialData?.dateTime ? toLocalInput(initialData.dateTime) : "");
+  const [location, setLocation] = useState(initialData?.location ?? "");
+  const [maxSpots, setMaxSpots] = useState(initialData?.maxSpots ?? 2);
+  const [description, setDescription] = useState(initialData?.description ?? "");
   const [activeField, setActiveField] = useState<Field>(null);
   const [showTagInput, setShowTagInput] = useState(false);
-  const [showDescription, setShowDescription] = useState(false);
+  const [showDescription, setShowDescription] = useState(!!(initialData?.description));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+
+  const isEditMode = !!initialData;
 
   const minDateTime = new Date(Date.now() + 60 * 1000).toISOString().slice(0, 16);
 
@@ -67,9 +83,12 @@ export default function ActivityForm() {
     setErrors({});
     setSaving(true);
 
+    const url = initialData ? `/api/activities/${initialData.id}` : "/api/activities";
+    const method = initialData ? "PATCH" : "POST";
+
     try {
-      const res = await fetch("/api/activities", {
-        method: "POST",
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title,
@@ -481,7 +500,7 @@ export default function ActivityForm() {
             transition: "all 0.15s",
           }}
         >
-          {saving ? "Posting…" : "Post it 🎉"}
+          {saving ? (isEditMode ? "Saving…" : "Posting…") : (isEditMode ? "Save changes" : "Post it 🎉")}
         </button>
       </div>
     </div>
