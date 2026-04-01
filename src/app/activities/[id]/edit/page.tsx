@@ -3,6 +3,8 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import ActivityForm from "@/app/components/activity-form";
 
+export const dynamic = "force-dynamic";
+
 export default async function EditActivityPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/");

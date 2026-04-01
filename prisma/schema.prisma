@@ -81,9 +81,10 @@ model Activity {
   location    String
   locationLat Float
   locationLng Float
-  maxSpots    Int
-  status      ActivityStatus @default(open)
-  createdAt   DateTime       @default(now())
+  maxSpots            Int
+  status              ActivityStatus @default(open)
+  cancellationReason  String?
+  createdAt           DateTime       @default(now())
 
   host         User          @relation("HostedActivities", fields: [hostId], references: [id])
   joinRequests JoinRequest[]

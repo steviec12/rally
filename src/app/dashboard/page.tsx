@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import Link from "next/link";
 import Image from "next/image";
 import SignOutButton from "@/app/components/sign-out-button";
+import CancelActivityButton from "@/app/components/cancel-activity-button";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -27,7 +28,7 @@ export default async function DashboardPage() {
   const activities = await db.activity.findMany({
     where: { hostId: session.user.id },
     orderBy: { dateTime: "asc" },
-    select: { id: true, title: true, dateTime: true, status: true },
+    select: { id: true, title: true, dateTime: true, status: true, cancellationReason: true },
   });
 
   const now = new Date();
@@ -154,7 +155,7 @@ export default async function DashboardPage() {
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {activities.map((a) => {
-                const editable = a.dateTime > now && a.status !== "cancelled";
+                const editable = a.dateTime > now && a.status !== "cancelled" && a.status !== "completed";
                 return (
                   <div
                     key={a.id}
@@ -171,10 +172,11 @@ export default async function DashboardPage() {
                           fontFamily: "var(--font-body)",
                           fontWeight: 600,
                           fontSize: 14,
-                          color: "var(--text-primary)",
+                          color: a.status === "cancelled" ? "var(--text-muted)" : "var(--text-primary)",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
+                          textDecoration: a.status === "cancelled" ? "line-through" : "none",
                         }}
                       >
                         {a.title}
@@ -183,24 +185,44 @@ export default async function DashboardPage() {
                         {new Date(a.dateTime).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                       </p>
                     </div>
-                    {editable && (
-                      <Link
-                        href={`/activities/${a.id}/edit`}
+                    {a.status === "cancelled" ? (
+                      <span
                         style={{
                           flexShrink: 0,
-                          fontSize: 12,
+                          fontSize: 11,
                           fontFamily: "var(--font-body)",
-                          fontWeight: 600,
-                          color: "var(--fuchsia)",
-                          textDecoration: "none",
+                          fontWeight: 700,
+                          color: "var(--text-muted)",
+                          background: "var(--bg)",
+                          border: "1.5px solid var(--border)",
                           padding: "4px 10px",
                           borderRadius: "100px",
-                          border: "1.5px solid var(--fuchsia)",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.04em",
                         }}
                       >
-                        Edit
-                      </Link>
-                    )}
+                        Cancelled
+                      </span>
+                    ) : editable ? (
+                      <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                        <Link
+                          href={`/activities/${a.id}/edit`}
+                          style={{
+                            fontSize: 12,
+                            fontFamily: "var(--font-body)",
+                            fontWeight: 600,
+                            color: "var(--fuchsia)",
+                            textDecoration: "none",
+                            padding: "4px 10px",
+                            borderRadius: "100px",
+                            border: "1.5px solid var(--fuchsia)",
+                          }}
+                        >
+                          Edit
+                        </Link>
+                        <CancelActivityButton activityId={a.id} />
+                      </div>
+                    ) : null}
                   </div>
                 );
               })}
