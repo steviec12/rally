@@ -1,3 +1,34 @@
+import { db } from "@/lib/db";
+
+type CancelResult =
+  | { success: true; error?: never }
+  | { success: false; error: string; status: 403 | 404 | 409 };
+
+export async function cancelActivity(
+  activityId: string,
+  requestingUserId: string,
+  reason?: string
+): Promise<CancelResult> {
+  const activity = await db.activity.findUnique({ where: { id: activityId } });
+  if (!activity) return { success: false as const, error: "Activity not found.", status: 404 as const };
+  if (activity.hostId !== requestingUserId) return { success: false as const, error: "Forbidden", status: 403 as const };
+  if (activity.dateTime <= new Date()) {
+    return { success: false as const, error: "This activity has already started and cannot be cancelled.", status: 403 as const };
+  }
+  if (activity.status === "completed") {
+    return { success: false as const, error: "Completed activities cannot be cancelled.", status: 403 as const };
+  }
+  if (activity.status === "cancelled") {
+    return { success: false as const, error: "Activity is already cancelled.", status: 409 as const };
+  }
+
+  await db.activity.update({
+    where: { id: activityId },
+    data: { status: "cancelled", cancellationReason: reason?.trim() || null },
+  });
+  return { success: true as const };
+}
+
 export function validateActivityInput(body: unknown): { error: string } | null {
   const b = body as Record<string, unknown>;
 

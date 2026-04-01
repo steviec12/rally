@@ -1,7 +1,37 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { validateActivityInput, sanitizeTags } from "@/lib/activity";
+import { validateActivityInput, sanitizeTags, cancelActivity } from "@/lib/activity";
+
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  let reason: string | undefined;
+  try {
+    const body = await _req.json();
+    if (typeof body?.reason === "string") {
+      if (body.reason.length > 500) {
+        return NextResponse.json({ error: "Reason must be 500 characters or fewer." }, { status: 400 });
+      }
+      reason = body.reason;
+    }
+  } catch {
+    // reason is optional — ignore parse errors
+  }
+
+  const result = await cancelActivity(id, session.user.id, reason);
+
+  if (!result.success) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
+  }
+
+  return NextResponse.json({ success: true });
+}
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
