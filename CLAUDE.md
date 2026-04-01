@@ -81,7 +81,7 @@ Never skip these. If a stage is reached without running the required agent, stop
 6. **CHECKLIST** — Run automated checks (`npm run lint`, `npx tsc --noEmit`, `npm run test`). Give the user a step-by-step manual testing checklist. **STOP here — do NOT commit or proceed until the user explicitly confirms manual tests passed. No exceptions.**
 7. **COMMIT** — Only after user confirmation. Clean commits with conventional commit messages on the feature branch.
 8. **VALIDATE** — Run `pr-validator` agent.
-9. **PR** — Open a pull request to `main`.
+9. **PR** — Open a pull request to `main`. The PR body must include `Closes #X` (the GitHub issue number) so the issue is automatically closed on merge.
 10. **MERGE** — Merge only after PR review passes. Never squash TDD commit history.
 
 ### TDD — apply when possible, skip when not
