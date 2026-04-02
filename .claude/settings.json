@@ -1,0 +1,21 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": "case \"$CLAUDE_FILE_PATH\" in */prisma/schema.prisma|*.env*|*/src/generated/*) echo 'BLOCKED: Protected file — prisma/schema.prisma, .env*, and src/generated/ cannot be edited without explicit user request.' && exit 1;; esac"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": "npx eslint --fix \"$CLAUDE_FILE_PATH\" 2>/dev/null || true"
+      }
+    ],
+    "Stop": [
+      {
+        "command": "npm run lint && npx tsc --noEmit && npm run test -- --run"
+      }
+    ]
+  }
+}

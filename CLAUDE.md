@@ -11,10 +11,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run dev      # Start development server
-npm run build    # Build for production
-npm run start    # Start production server
-npm run lint     # Run ESLint
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run start        # Start production server
+npm run lint         # Run ESLint
+npm run test         # Run unit/integration tests (Vitest)
+npm run test:e2e     # Run E2E tests (Playwright)
+npm run test:coverage # Run tests with coverage report (70% threshold)
 ```
 
 ## Product Philosophy
@@ -141,3 +144,38 @@ Use **conventional commits** format: `type(scope): description`
 - Don't implement anything without confirming first — no jumping ahead
 - Don't try to please — honest and direct feedback is more valuable than agreement
 - Don't make assumptions about requirements; if something is ambiguous, ask
+
+## Security (OWASP Top 10)
+
+Run the `security-reviewer` agent before merging any PR that touches auth, API routes, or user input.
+
+**Authentication & Access Control (A01):**
+- Every API route and server action must call `auth()` and check the session before proceeding
+- Verify object ownership — never let user A access user B's data by guessing an ID
+- Use NextAuth's built-in CSRF protection — never bypass it
+
+**Data Protection (A02):**
+- Never commit secrets — use `.env.local` only
+- Passwords hashed with bcrypt — never store or log plaintext
+- Keep JWT payload minimal (user ID only)
+
+**Injection Prevention (A03):**
+- Use Prisma for ALL database access — parameterized by default
+- Never use raw SQL or string concatenation in queries
+- Never use `dangerouslySetInnerHTML`
+
+**Input Validation (A04, A08):**
+- Validate all input on the server side — client validation is UX only
+- Reject unexpected fields — don't spread user input into Prisma queries
+
+**XSS Prevention (A07):**
+- React escapes output by default — never bypass with `dangerouslySetInnerHTML`
+- Sanitize user-generated content before rendering
+
+**Dependency Security (A06):**
+- `npm audit` runs in CI on every push
+- Review changelogs before upgrading auth or database dependencies
+
+**Secret Scanning:**
+- Gitleaks runs in CI — never commit `.env` files
+- If a secret is accidentally committed, rotate it immediately
