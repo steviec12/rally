@@ -17,6 +17,55 @@ export function mapRejectionToError(reason: RejectionReason): { error: string; s
   }
 }
 
+interface DbUser {
+  id: string;
+  interests: string[];
+  locationLat: number | null;
+  locationLng: number | null;
+  rating: number | null;
+  activityCount: number;
+}
+
+interface DbActivity {
+  id: string;
+  hostId: string;
+  tags: string[];
+  dateTime: Date;
+  locationLat: number;
+  locationLng: number;
+  maxSpots: number;
+  status: string;
+  _count: { joinRequests: number };
+}
+
+function toScoringUser(user: DbUser): ScoringUser {
+  return {
+    id: user.id,
+    interests: user.interests,
+    locationLat: user.locationLat ?? 0,
+    locationLng: user.locationLng ?? 0,
+    rating: user.rating,
+    activityCount: user.activityCount,
+  };
+}
+
+function toScoringActivity(activity: DbActivity): ScoringActivity {
+  return {
+    id: activity.id,
+    hostId: activity.hostId,
+    tags: activity.tags,
+    dateTime: activity.dateTime,
+    locationLat: activity.locationLat,
+    locationLng: activity.locationLng,
+    maxSpots: activity.maxSpots,
+    approvedCount: activity._count.joinRequests,
+  };
+}
+
+function isUniqueConstraintError(error: unknown): boolean {
+  return (error as { code?: string }).code === "P2002";
+}
+
 export async function createJoinRequest(
   activityId: string,
   userId: string,
@@ -51,31 +100,13 @@ export async function createJoinRequest(
     return { success: false, error: "This activity has been cancelled.", status: 409 };
   }
 
-  const scoringUser: ScoringUser = {
-    id: user.id,
-    interests: user.interests,
-    locationLat: user.locationLat ?? 0,
-    locationLng: user.locationLng ?? 0,
-    rating: user.rating,
-    activityCount: user.activityCount,
-  };
-
-  const scoringActivity: ScoringActivity = {
-    id: activity.id,
-    hostId: activity.hostId,
-    tags: activity.tags,
-    dateTime: activity.dateTime,
-    locationLat: activity.locationLat,
-    locationLng: activity.locationLng,
-    maxSpots: activity.maxSpots,
-    approvedCount: activity._count.joinRequests,
-  };
-
-  const result = calculateCompatibilityScore(scoringUser, scoringActivity);
+  const result = calculateCompatibilityScore(
+    toScoringUser(user),
+    toScoringActivity(activity as DbActivity),
+  );
 
   if (result.outcome === "rejected") {
-    const mapped = mapRejectionToError(result.reason);
-    return { success: false, ...mapped };
+    return { success: false, ...mapRejectionToError(result.reason) };
   }
 
   try {
@@ -96,7 +127,7 @@ export async function createJoinRequest(
       },
     };
   } catch (error: unknown) {
-    if ((error as { code?: string }).code === "P2002") {
+    if (isUniqueConstraintError(error)) {
       return {
         success: false,
         error: "You have already requested to join this activity.",
