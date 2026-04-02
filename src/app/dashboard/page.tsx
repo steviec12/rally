@@ -233,12 +233,29 @@ export default async function DashboardPage() {
         {/* Actions */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%" }}>
           <Link
+            href="/feed"
+            style={{
+              display: "block",
+              textAlign: "center",
+              padding: "12px",
+              borderRadius: "100px",
+              background: "linear-gradient(135deg, var(--fuchsia), var(--violet))",
+              color: "#fff",
+              fontFamily: "var(--font-body)",
+              fontWeight: 700,
+              fontSize: 15,
+              textDecoration: "none",
+            }}
+          >
+            Browse activities 🔥
+          </Link>
+          <Link
             href="/activities/new"
             style={{
               display: "block",
               textAlign: "center",
               padding: "12px",
-              borderRadius: "12px",
+              borderRadius: "100px",
               background: "linear-gradient(135deg, var(--fuchsia), var(--violet))",
               color: "#fff",
               fontFamily: "var(--font-body)",
@@ -255,7 +272,7 @@ export default async function DashboardPage() {
               display: "block",
               textAlign: "center",
               padding: "12px",
-              borderRadius: "12px",
+              borderRadius: "100px",
               background: "linear-gradient(135deg, var(--fuchsia), var(--violet))",
               color: "#fff",
               fontFamily: "var(--font-body)",
@@ -272,7 +289,7 @@ export default async function DashboardPage() {
               display: "block",
               textAlign: "center",
               padding: "12px",
-              borderRadius: "12px",
+              borderRadius: "100px",
               border: "2px solid var(--border)",
               color: "var(--text-secondary)",
               fontFamily: "var(--font-body)",
