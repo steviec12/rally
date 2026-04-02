@@ -1,4 +1,4 @@
-import { PrismaClient } from "../src/generated/prisma/client";
+import { PrismaClient, JoinRequestStatus } from "../src/generated/prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import bcrypt from "bcryptjs";
 import "dotenv/config";
@@ -228,7 +228,7 @@ async function main() {
 
     const existing = await db.joinRequest.findUnique({
       where: {
-        activityId_userId: { activityId: activity.id, usrId: user.id },
+        activityId_userId: { activityId: activity.id, userId: user.id },
       },
     }).catch(() => null);
 
@@ -242,7 +242,7 @@ async function main() {
         activityId: activity.id,
         userId: user.id,
         compatibilityScore: jrData.score,
-        status: jrData.status ?? "pending",
+        status: (jrData.status ?? "pending") as JoinRequestStatus,
       },
     });
     console.log(
