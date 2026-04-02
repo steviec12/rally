@@ -1,10 +1,9 @@
 import { db } from "@/lib/db";
 import { calculateCompatibilityScore } from "@/lib/scoring";
 import type { ScoringUser, ScoringActivity, RejectionReason } from "@/types/scoring";
+import type { JoinRequestResult } from "@/types/join-request";
 
-export type JoinRequestResult =
-  | { success: true; joinRequest: { id: string; status: string; compatibilityScore: number | null } }
-  | { success: false; error: string; status: 403 | 404 | 409 };
+export type { JoinRequestResult };
 
 export function mapRejectionToError(reason: RejectionReason): { error: string; status: 403 | 409 } {
   switch (reason) {
@@ -63,7 +62,8 @@ function toScoringActivity(activity: DbActivity): ScoringActivity {
 }
 
 function isUniqueConstraintError(error: unknown): boolean {
-  return (error as { code?: string }).code === "P2002";
+  return typeof error === "object" && error !== null && "code" in error
+    && (error as { code: unknown }).code === "P2002";
 }
 
 export async function createJoinRequest(

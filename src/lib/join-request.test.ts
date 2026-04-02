@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mapRejectionToError } from './join-request';
-import type { RejectionReason } from '@/types/scoring';
 
 // Mock db module
 vi.mock('@/lib/db', () => ({
@@ -25,10 +24,13 @@ vi.mock('@/lib/scoring', () => ({
 import { db } from '@/lib/db';
 import { calculateCompatibilityScore } from '@/lib/scoring';
 import { createJoinRequest } from './join-request';
-import type { ScoringResult } from '@/types/scoring';
 
-const mockedDb = vi.mocked(db);
-const mockedScore = vi.mocked(calculateCompatibilityScore);
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const mockActivityFindUnique = db.activity.findUnique as any;
+const mockUserFindUnique = db.user.findUnique as any;
+const mockJoinRequestCreate = db.joinRequest.create as any;
+const mockedScore = calculateCompatibilityScore as any;
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 // Fixtures
 const mockActivity = {
@@ -86,8 +88,8 @@ describe('createJoinRequest', () => {
   });
 
   it('returns 404 when activity is not found', async () => {
-    mockedDb.activity.findUnique.mockResolvedValue(null);
-    mockedDb.user.findUnique.mockResolvedValue(mockUser as never);
+    mockActivityFindUnique.mockResolvedValue(null);
+    mockUserFindUnique.mockResolvedValue(mockUser);
 
     const result = await createJoinRequest('activity-1', 'user-1');
     expect(result).toEqual({
@@ -98,8 +100,8 @@ describe('createJoinRequest', () => {
   });
 
   it('returns 404 when user is not found', async () => {
-    mockedDb.activity.findUnique.mockResolvedValue(mockActivity as never);
-    mockedDb.user.findUnique.mockResolvedValue(null);
+    mockActivityFindUnique.mockResolvedValue(mockActivity);
+    mockUserFindUnique.mockResolvedValue(null);
 
     const result = await createJoinRequest('activity-1', 'user-1');
     expect(result).toEqual({
@@ -110,11 +112,11 @@ describe('createJoinRequest', () => {
   });
 
   it('returns 409 when activity is cancelled', async () => {
-    mockedDb.activity.findUnique.mockResolvedValue({
+    mockActivityFindUnique.mockResolvedValue({
       ...mockActivity,
       status: 'cancelled',
-    } as never);
-    mockedDb.user.findUnique.mockResolvedValue(mockUser as never);
+    });
+    mockUserFindUnique.mockResolvedValue(mockUser);
 
     const result = await createJoinRequest('activity-1', 'user-1');
     expect(result).toEqual({
@@ -125,8 +127,8 @@ describe('createJoinRequest', () => {
   });
 
   it('returns rejection error when scoring rejects (self_join)', async () => {
-    mockedDb.activity.findUnique.mockResolvedValue(mockActivity as never);
-    mockedDb.user.findUnique.mockResolvedValue(mockUser as never);
+    mockActivityFindUnique.mockResolvedValue(mockActivity);
+    mockUserFindUnique.mockResolvedValue(mockUser);
     mockedScore.mockReturnValue({ outcome: 'rejected', reason: 'self_join' });
 
     const result = await createJoinRequest('activity-1', 'user-1');
@@ -138,8 +140,8 @@ describe('createJoinRequest', () => {
   });
 
   it('returns rejection error when scoring rejects (activity_full)', async () => {
-    mockedDb.activity.findUnique.mockResolvedValue(mockActivity as never);
-    mockedDb.user.findUnique.mockResolvedValue(mockUser as never);
+    mockActivityFindUnique.mockResolvedValue(mockActivity);
+    mockUserFindUnique.mockResolvedValue(mockUser);
     mockedScore.mockReturnValue({ outcome: 'rejected', reason: 'activity_full' });
 
     const result = await createJoinRequest('activity-1', 'user-1');
@@ -150,9 +152,22 @@ describe('createJoinRequest', () => {
     });
   });
 
+  it('returns rejection error when scoring rejects (activity_expired)', async () => {
+    mockActivityFindUnique.mockResolvedValue(mockActivity);
+    mockUserFindUnique.mockResolvedValue(mockUser);
+    mockedScore.mockReturnValue({ outcome: 'rejected', reason: 'activity_expired' });
+
+    const result = await createJoinRequest('activity-1', 'user-1');
+    expect(result).toEqual({
+      success: false,
+      error: 'This activity has already started.',
+      status: 409,
+    });
+  });
+
   it('creates join request on successful scoring', async () => {
-    mockedDb.activity.findUnique.mockResolvedValue(mockActivity as never);
-    mockedDb.user.findUnique.mockResolvedValue(mockUser as never);
+    mockActivityFindUnique.mockResolvedValue(mockActivity);
+    mockUserFindUnique.mockResolvedValue(mockUser);
     mockedScore.mockReturnValue({
       outcome: 'scored',
       breakdown: {
@@ -163,21 +178,21 @@ describe('createJoinRequest', () => {
         activityCountScore: 2.5,
       },
     });
-    mockedDb.joinRequest.create.mockResolvedValue({
+    mockJoinRequestCreate.mockResolvedValue({
       id: 'jr-1',
       status: 'pending',
       compatibilityScore: 75,
       activityId: 'activity-1',
       userId: 'user-1',
       createdAt: new Date(),
-    } as never);
+    });
 
     const result = await createJoinRequest('activity-1', 'user-1');
     expect(result).toEqual({
       success: true,
       joinRequest: { id: 'jr-1', status: 'pending', compatibilityScore: 75 },
     });
-    expect(mockedDb.joinRequest.create).toHaveBeenCalledWith({
+    expect(mockJoinRequestCreate).toHaveBeenCalledWith({
       data: {
         activityId: 'activity-1',
         userId: 'user-1',
@@ -187,8 +202,8 @@ describe('createJoinRequest', () => {
   });
 
   it('returns 409 on duplicate join request (P2002)', async () => {
-    mockedDb.activity.findUnique.mockResolvedValue(mockActivity as never);
-    mockedDb.user.findUnique.mockResolvedValue(mockUser as never);
+    mockActivityFindUnique.mockResolvedValue(mockActivity);
+    mockUserFindUnique.mockResolvedValue(mockUser);
     mockedScore.mockReturnValue({
       outcome: 'scored',
       breakdown: {
@@ -199,9 +214,8 @@ describe('createJoinRequest', () => {
         activityCountScore: 2.5,
       },
     });
-    const prismaError = new Error('Unique constraint failed');
-    (prismaError as Record<string, unknown>).code = 'P2002';
-    mockedDb.joinRequest.create.mockRejectedValue(prismaError);
+    const prismaError = Object.assign(new Error('Unique constraint failed'), { code: 'P2002' });
+    mockJoinRequestCreate.mockRejectedValue(prismaError);
 
     const result = await createJoinRequest('activity-1', 'user-1');
     expect(result).toEqual({
@@ -213,8 +227,8 @@ describe('createJoinRequest', () => {
 
   it('builds ScoringUser with default lat/lng when user has null coordinates', async () => {
     const userWithNullCoords = { ...mockUser, locationLat: null, locationLng: null };
-    mockedDb.activity.findUnique.mockResolvedValue(mockActivity as never);
-    mockedDb.user.findUnique.mockResolvedValue(userWithNullCoords as never);
+    mockActivityFindUnique.mockResolvedValue(mockActivity);
+    mockUserFindUnique.mockResolvedValue(userWithNullCoords);
     mockedScore.mockReturnValue({
       outcome: 'scored',
       breakdown: {
@@ -225,14 +239,14 @@ describe('createJoinRequest', () => {
         activityCountScore: 2.5,
       },
     });
-    mockedDb.joinRequest.create.mockResolvedValue({
+    mockJoinRequestCreate.mockResolvedValue({
       id: 'jr-2',
       status: 'pending',
       compatibilityScore: 50,
       activityId: 'activity-1',
       userId: 'user-1',
       createdAt: new Date(),
-    } as never);
+    });
 
     await createJoinRequest('activity-1', 'user-1');
 
@@ -243,11 +257,11 @@ describe('createJoinRequest', () => {
   });
 
   it('passes correct ScoringActivity with approvedCount from _count', async () => {
-    mockedDb.activity.findUnique.mockResolvedValue({
+    mockActivityFindUnique.mockResolvedValue({
       ...mockActivity,
       _count: { joinRequests: 3 },
-    } as never);
-    mockedDb.user.findUnique.mockResolvedValue(mockUser as never);
+    });
+    mockUserFindUnique.mockResolvedValue(mockUser);
     mockedScore.mockReturnValue({
       outcome: 'scored',
       breakdown: {
@@ -258,14 +272,14 @@ describe('createJoinRequest', () => {
         activityCountScore: 2.5,
       },
     });
-    mockedDb.joinRequest.create.mockResolvedValue({
+    mockJoinRequestCreate.mockResolvedValue({
       id: 'jr-3',
       status: 'pending',
       compatibilityScore: 60,
       activityId: 'activity-1',
       userId: 'user-1',
       createdAt: new Date(),
-    } as never);
+    });
 
     await createJoinRequest('activity-1', 'user-1');
 
@@ -276,8 +290,8 @@ describe('createJoinRequest', () => {
   });
 
   it('re-throws unexpected errors', async () => {
-    mockedDb.activity.findUnique.mockResolvedValue(mockActivity as never);
-    mockedDb.user.findUnique.mockResolvedValue(mockUser as never);
+    mockActivityFindUnique.mockResolvedValue(mockActivity);
+    mockUserFindUnique.mockResolvedValue(mockUser);
     mockedScore.mockReturnValue({
       outcome: 'scored',
       breakdown: {
@@ -288,7 +302,7 @@ describe('createJoinRequest', () => {
         activityCountScore: 2.5,
       },
     });
-    mockedDb.joinRequest.create.mockRejectedValue(new Error('Connection lost'));
+    mockJoinRequestCreate.mockRejectedValue(new Error('Connection lost'));
 
     await expect(createJoinRequest('activity-1', 'user-1')).rejects.toThrow('Connection lost');
   });
