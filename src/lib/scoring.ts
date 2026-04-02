@@ -1,4 +1,5 @@
 import type { ScoringUser, ScoringActivity, ScoringResult } from '@/types/scoring';
+import { haversineKm } from '@/lib/geo';
 
 const MAX_DISTANCE_KM = 50;
 const MAX_ACTIVITY_COUNT = 20;
@@ -9,18 +10,6 @@ function calcTagScore(interests: string[], tags: string[]): number {
   if (interests.length === 0) return 0;
   const matches = interests.filter((i) => tags.includes(i)).length;
   return (matches / tags.length) * 40;
-}
-
-function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 function calcProximityScore(

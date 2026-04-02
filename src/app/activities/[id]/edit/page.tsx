@@ -58,6 +58,8 @@ export default async function EditActivityPage({ params }: { params: Promise<{ i
               tags: activity.tags,
               dateTime: activity.dateTime.toISOString(),
               location: activity.location,
+              locationLat: activity.locationLat,
+              locationLng: activity.locationLng,
               maxSpots: activity.maxSpots,
               description: activity.description,
             }}

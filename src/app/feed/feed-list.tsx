@@ -1,30 +1,65 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import ActivityCard from "@/app/components/activity-card";
-import type { FeedActivity } from "@/types/activity";
+import type { FeedActivity, FeedFilters } from "@/types/activity";
 
 interface FeedListProps {
   initialActivities: FeedActivity[];
   initialNextCursor: string | null;
+  filters?: FeedFilters;
 }
 
-export default function FeedList({ initialActivities, initialNextCursor }: FeedListProps) {
+function buildFilterQuery(filters?: FeedFilters): string {
+  const params = new URLSearchParams();
+  if (filters?.tags?.length) params.set("tags", filters.tags.join(","));
+  if (filters?.customTags) params.set("customTags", "true");
+  if (filters?.dateFrom) params.set("dateFrom", filters.dateFrom);
+  if (filters?.dateTo) params.set("dateTo", filters.dateTo);
+  if (filters?.distanceKm != null) params.set("distanceKm", String(filters.distanceKm));
+  const qs = params.toString();
+  return qs ? `&${qs}` : "";
+}
+
+export default function FeedList({ initialActivities, initialNextCursor, filters }: FeedListProps) {
   const [activities, setActivities] = useState<FeedActivity[]>(initialActivities);
   const [nextCursor, setNextCursor] = useState<string | null>(initialNextCursor);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const filtersKey = JSON.stringify(filters ?? {});
+  const prevFiltersKey = useRef(filtersKey);
+
+  useEffect(() => {
+    if (prevFiltersKey.current !== filtersKey) {
+      prevFiltersKey.current = filtersKey;
+      setActivities(initialActivities);
+      setNextCursor(initialNextCursor);
+    }
+  }, [filtersKey, initialActivities, initialNextCursor]);
+
+  const filterQuery = buildFilterQuery(filters);
 
   async function loadMore() {
     if (!nextCursor || loading) return;
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/activities?cursor=${nextCursor}`);
-      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-      const data = await res.json();
-      setActivities((prev) => [...prev, ...data.activities]);
-      setNextCursor(data.nextCursor);
+      let cursor = nextCursor;
+      let newActivities: FeedActivity[] = [];
+
+      // Retry if distance filtering returns empty pages but more data exists
+      while (cursor) {
+        const res = await fetch(`/api/activities?cursor=${cursor}${filterQuery}`);
+        if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+        const data = await res.json();
+        newActivities = data.activities;
+        cursor = data.nextCursor;
+        if (newActivities.length > 0 || !cursor) break;
+      }
+
+      setActivities((prev) => [...prev, ...newActivities]);
+      setNextCursor(cursor);
     } catch (err) {
       console.error("Failed to load more activities:", err);
       setError("Couldn't load more activities. Please try again.");
@@ -32,6 +67,8 @@ export default function FeedList({ initialActivities, initialNextCursor }: FeedL
       setLoading(false);
     }
   }
+
+  const hasFilters = filters && Object.keys(filters).length > 0;
 
   if (activities.length === 0) {
     return (
@@ -44,7 +81,7 @@ export default function FeedList({ initialActivities, initialNextCursor }: FeedL
           border: "1px solid var(--border)",
         }}
       >
-        <p style={{ fontSize: 32, marginBottom: 12 }}>🏃</p>
+        <p style={{ fontSize: 32, marginBottom: 12 }}>{hasFilters ? "🔍" : "🏃"}</p>
         <p
           style={{
             fontFamily: "var(--font-outfit), sans-serif",
@@ -54,10 +91,10 @@ export default function FeedList({ initialActivities, initialNextCursor }: FeedL
             marginBottom: 8,
           }}
         >
-          No activities yet
+          {hasFilters ? "No activities match your filters" : "No activities yet"}
         </p>
         <p style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "var(--text-muted)" }}>
-          Be the first to post one!
+          {hasFilters ? "Try adjusting or clearing your filters." : "Be the first to post one!"}
         </p>
       </div>
     );

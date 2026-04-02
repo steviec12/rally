@@ -17,6 +17,8 @@ export async function GET() {
       image: true,
       interests: true,
       location: true,
+      locationLat: true,
+      locationLng: true,
     },
   });
 
@@ -32,7 +34,7 @@ export async function PATCH(req: Request) {
   }
 
   const body = await req.json();
-  const { name, bio, image, interests, location } = body;
+  const { name, bio, image, interests, location, locationLat, locationLng } = body;
 
   if (name !== undefined && (typeof name !== "string" || name.trim().length < 1)) {
     return NextResponse.json({ error: "Name cannot be empty." }, { status: 400 });
@@ -50,6 +52,8 @@ export async function PATCH(req: Request) {
       ...(image !== undefined && { image }),
       ...(interests !== undefined && { interests }),
       ...(location !== undefined && { location }),
+      ...(locationLat !== undefined && { locationLat: typeof locationLat === "number" ? locationLat : null }),
+      ...(locationLng !== undefined && { locationLng: typeof locationLng === "number" ? locationLng : null }),
     },
     select: {
       id: true,
@@ -58,6 +62,8 @@ export async function PATCH(req: Request) {
       image: true,
       interests: true,
       location: true,
+      locationLat: true,
+      locationLng: true,
     },
   });
 

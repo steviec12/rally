@@ -10,6 +10,8 @@ interface ProfileData {
   image: string;
   interests: string[];
   location: string;
+  locationLat: number | null;
+  locationLng: number | null;
 }
 
 export default function ProfileForm({ initial }: { initial: ProfileData }) {
@@ -21,6 +23,9 @@ export default function ProfileForm({ initial }: { initial: ProfileData }) {
   const [image, setImage] = useState(initial.image ?? "");
   const [interests, setInterests] = useState<string[]>(initial.interests ?? []);
   const [location, setLocation] = useState(initial.location ?? "");
+  const [hasCoords, setHasCoords] = useState(initial.locationLat != null);
+  const [locating, setLocating] = useState(false);
+  const [locationError, setLocationError] = useState("");
   const [tagInput, setTagInput] = useState("");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -177,6 +182,201 @@ export default function ProfileForm({ initial }: { initial: ProfileData }) {
           placeholder="e.g. Los Angeles, CA"
           style={inputStyle(false)}
         />
+      </div>
+
+      {/* Precise location for distance matching */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+        <label style={labelStyle}>Precise location</label>
+        {hasCoords ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <span
+              style={{
+                fontFamily: "var(--font-body)",
+                fontSize: 13,
+                color: "var(--text-secondary)",
+              }}
+            >
+              {location ? `📍 ${location}` : "Location enabled"}
+            </span>
+            <div style={{ display: "flex", gap: 12 }}>
+              <button
+                type="button"
+                disabled={locating}
+                onClick={() => {
+                  if (!navigator.geolocation) return;
+                  setLocating(true);
+                  setLocationError("");
+                  navigator.geolocation.getCurrentPosition(
+                    async (pos) => {
+                      const lat = pos.coords.latitude;
+                      const lng = pos.coords.longitude;
+                      let placeName = "";
+                      try {
+                        const geoRes = await fetch(
+                          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+                          { headers: { "User-Agent": "Rally-App/1.0" } },
+                        );
+                        if (geoRes.ok) {
+                          const geoData = await geoRes.json();
+                          const addr = geoData.address;
+                          if (addr) {
+                            placeName = [
+                              addr.city || addr.town || addr.village || addr.suburb || "",
+                              addr.state || "",
+                            ].filter(Boolean).join(", ");
+                          }
+                        }
+                      } catch { /* non-critical */ }
+                      await fetch("/api/profile", {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          locationLat: lat,
+                          locationLng: lng,
+                          ...(placeName ? { location: placeName } : {}),
+                        }),
+                      });
+                      if (placeName) setLocation(placeName);
+                      setLocating(false);
+                    },
+                    (err) => {
+                      setLocating(false);
+                      if (err.code === err.PERMISSION_DENIED) {
+                        setLocationError("Location permission denied. Please enable it in your browser settings and try again.");
+                      } else {
+                        setLocationError("Could not get your location. Please try again.");
+                      }
+                    },
+                  );
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--fuchsia)",
+                  fontFamily: "var(--font-body)",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: locating ? "not-allowed" : "pointer",
+                  padding: 0,
+                }}
+              >
+                {locating ? "Updating…" : "Update"}
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  await fetch("/api/profile", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ locationLat: null, locationLng: null }),
+                  });
+                  setHasCoords(false);
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--text-muted)",
+                  fontFamily: "var(--font-body)",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  padding: 0,
+                }}
+              >
+                Disable
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            disabled={locating}
+            onClick={() => {
+              if (!navigator.geolocation) {
+                setLocationError("Geolocation is not supported by your browser.");
+                return;
+              }
+              setLocating(true);
+              setLocationError("");
+              navigator.geolocation.getCurrentPosition(
+                async (pos) => {
+                  const lat = pos.coords.latitude;
+                  const lng = pos.coords.longitude;
+
+                  // Reverse geocode to get a place name
+                  let placeName = "";
+                  try {
+                    const geoRes = await fetch(
+                      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+                      { headers: { "User-Agent": "Rally-App/1.0" } },
+                    );
+                    if (geoRes.ok) {
+                      const geoData = await geoRes.json();
+                      const addr = geoData.address;
+                      if (addr) {
+                        placeName = [
+                          addr.city || addr.town || addr.village || addr.suburb || "",
+                          addr.state || "",
+                        ]
+                          .filter(Boolean)
+                          .join(", ");
+                      }
+                    }
+                  } catch {
+                    // Non-critical — location still saves without a name
+                  }
+
+                  await fetch("/api/profile", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      locationLat: lat,
+                      locationLng: lng,
+                      ...(placeName ? { location: placeName } : {}),
+                    }),
+                  });
+                  if (placeName) setLocation(placeName);
+                  setHasCoords(true);
+                  setLocating(false);
+                },
+                (err) => {
+                  setLocating(false);
+                  if (err.code === err.PERMISSION_DENIED) {
+                    setLocationError(
+                      "Location permission denied. Please enable it in your browser settings and try again.",
+                    );
+                  } else {
+                    setLocationError("Could not get your location. Please try again.");
+                  }
+                },
+              );
+            }}
+            style={{
+              alignSelf: "flex-start",
+              padding: "8px 16px",
+              borderRadius: "100px",
+              background: locating
+                ? "var(--text-muted)"
+                : "linear-gradient(135deg, var(--fuchsia), var(--violet))",
+              color: "#fff",
+              fontFamily: "var(--font-body)",
+              fontWeight: 700,
+              fontSize: 13,
+              border: "none",
+              cursor: locating ? "not-allowed" : "pointer",
+            }}
+          >
+            {locating ? "Getting location…" : "Enable location"}
+          </button>
+        )}
+        {locationError && (
+          <p style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--fuchsia)", marginTop: 2 }}>
+            {locationError}
+          </p>
+        )}
+        <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
+          Allows distance-based activity filtering on the feed
+        </p>
       </div>
 
       {/* Interests */}

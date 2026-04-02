@@ -15,6 +15,8 @@ export default async function ProfilePage() {
       image: true,
       interests: true,
       location: true,
+      locationLat: true,
+      locationLng: true,
     },
   });
 
@@ -56,6 +58,8 @@ export default async function ProfilePage() {
             image: user.image ?? "",
             interests: user.interests,
             location: user.location ?? "",
+            locationLat: user.locationLat,
+            locationLng: user.locationLng,
           }}
         />
       </div>
