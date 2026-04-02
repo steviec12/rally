@@ -16,3 +16,93 @@ export function mapRejectionToError(reason: RejectionReason): { error: string; s
       return { error: 'This activity has already started.', status: 409 };
   }
 }
+
+export async function createJoinRequest(
+  activityId: string,
+  userId: string,
+): Promise<JoinRequestResult> {
+  const [activity, user] = await Promise.all([
+    db.activity.findUnique({
+      where: { id: activityId },
+      include: { _count: { select: { joinRequests: { where: { status: "approved" } } } } },
+    }),
+    db.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        interests: true,
+        locationLat: true,
+        locationLng: true,
+        rating: true,
+        activityCount: true,
+      },
+    }),
+  ]);
+
+  if (!activity) {
+    return { success: false, error: "Activity not found.", status: 404 };
+  }
+
+  if (!user) {
+    return { success: false, error: "User not found.", status: 404 };
+  }
+
+  if (activity.status === "cancelled") {
+    return { success: false, error: "This activity has been cancelled.", status: 409 };
+  }
+
+  const scoringUser: ScoringUser = {
+    id: user.id,
+    interests: user.interests,
+    locationLat: user.locationLat ?? 0,
+    locationLng: user.locationLng ?? 0,
+    rating: user.rating,
+    activityCount: user.activityCount,
+  };
+
+  const scoringActivity: ScoringActivity = {
+    id: activity.id,
+    hostId: activity.hostId,
+    tags: activity.tags,
+    dateTime: activity.dateTime,
+    locationLat: activity.locationLat,
+    locationLng: activity.locationLng,
+    maxSpots: activity.maxSpots,
+    approvedCount: activity._count.joinRequests,
+  };
+
+  const result = calculateCompatibilityScore(scoringUser, scoringActivity);
+
+  if (result.outcome === "rejected") {
+    const mapped = mapRejectionToError(result.reason);
+    return { success: false, ...mapped };
+  }
+
+  try {
+    const joinRequest = await db.joinRequest.create({
+      data: {
+        activityId,
+        userId,
+        compatibilityScore: result.breakdown.total,
+      },
+    });
+
+    return {
+      success: true,
+      joinRequest: {
+        id: joinRequest.id,
+        status: joinRequest.status,
+        compatibilityScore: joinRequest.compatibilityScore,
+      },
+    };
+  } catch (error: unknown) {
+    if ((error as { code?: string }).code === "P2002") {
+      return {
+        success: false,
+        error: "You have already requested to join this activity.",
+        status: 409,
+      };
+    }
+    throw error;
+  }
+}
