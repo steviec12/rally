@@ -1,5 +1,30 @@
 import { db } from "@/lib/db";
-import type { FeedActivity } from "@/types/activity";
+import type { FeedActivity, FeedFilters } from "@/types/activity";
+import { filterByDistance } from "@/lib/geo";
+import { ACTIVITY_TAGS } from "@/lib/tags";
+
+export function buildFeedWhereClause(
+  userId: string,
+  filters?: FeedFilters,
+  now: Date = new Date(),
+) {
+  const dateFloor =
+    filters?.dateFrom && new Date(filters.dateFrom) > now
+      ? new Date(filters.dateFrom)
+      : now;
+
+  const dateTime: Record<string, Date> = { gt: dateFloor };
+  if (filters?.dateTo) {
+    dateTime.lte = new Date(filters.dateTo);
+  }
+
+  return {
+    status: "open" as const,
+    dateTime,
+    hostId: { not: userId },
+    ...(filters?.tags?.length ? { tags: { hasSome: filters.tags } } : {}),
+  };
+}
 
 // Matches a cuid() ID — 25 chars starting with 'c'
 const CUID_REGEX = /^c[a-z0-9]{24}$/;
@@ -13,20 +38,29 @@ interface FeedResult {
 
 export async function getFeedActivities(
   userId: string,
-  cursor?: string
+  cursor?: string,
+  filters?: FeedFilters,
 ): Promise<FeedResult> {
   if (cursor && !CUID_REGEX.test(cursor)) {
     return { activities: [], nextCursor: null };
   }
 
+  const hasDistanceFilter =
+    filters?.distanceKm != null &&
+    filters.userLat != null &&
+    filters.userLng != null;
+
+  const hasCustomTagsFilter = filters?.customTags === true;
+  const needsPostFilter = hasDistanceFilter || hasCustomTagsFilter;
+
+  const fetchSize = needsPostFilter
+    ? FEED_PAGE_SIZE * 3 + 1
+    : FEED_PAGE_SIZE + 1;
+
   const rows = await db.activity.findMany({
-    where: {
-      status: "open",
-      dateTime: { gt: new Date() },
-      hostId: { not: userId },
-    },
+    where: buildFeedWhereClause(userId, filters),
     orderBy: { dateTime: "asc" },
-    take: FEED_PAGE_SIZE + 1,
+    take: fetchSize,
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     select: {
       id: true,
@@ -34,11 +68,46 @@ export async function getFeedActivities(
       tags: true,
       dateTime: true,
       location: true,
+      locationLat: true,
+      locationLng: true,
       maxSpots: true,
       host: { select: { id: true, name: true, image: true } },
       _count: { select: { joinRequests: { where: { status: "approved" } } } },
     },
   });
+
+  if (needsPostFilter) {
+    // Post-filters run in JS. Use the last unfiltered row as cursor
+    // so subsequent pages advance past all fetched rows (including filtered-out ones).
+    const dbHasMore = rows.length === fetchSize;
+    const dbCursor = dbHasMore ? rows[rows.length - 1].id : null;
+
+    const predefined = ACTIVITY_TAGS as readonly string[];
+    let filtered = rows;
+
+    if (hasDistanceFilter) {
+      filtered = filterByDistance(
+        filtered,
+        filters!.userLat!,
+        filters!.userLng!,
+        filters!.distanceKm!,
+      );
+    }
+
+    if (hasCustomTagsFilter) {
+      filtered = filtered.filter((a) =>
+        a.tags.some((t) => !predefined.includes(t)),
+      );
+    }
+
+    const page = filtered.slice(0, FEED_PAGE_SIZE);
+    const activities: FeedActivity[] = page.map((a) => ({
+      ...a,
+      dateTime: a.dateTime.toISOString(),
+    }));
+
+    return { activities, nextCursor: dbCursor };
+  }
 
   const hasMore = rows.length > FEED_PAGE_SIZE;
   const page = hasMore ? rows.slice(0, FEED_PAGE_SIZE) : rows;

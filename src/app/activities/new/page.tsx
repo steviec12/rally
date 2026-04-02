@@ -1,10 +1,21 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { db } from "@/lib/db";
 import ActivityForm from "@/app/components/activity-form";
 
 export default async function NewActivityPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/");
+
+  const user = await db.user.findUnique({
+    where: { id: session.user.id },
+    select: { locationLat: true, locationLng: true },
+  });
+
+  const defaultLocation =
+    user?.locationLat != null && user?.locationLng != null
+      ? { lat: user.locationLat, lng: user.locationLng }
+      : undefined;
 
   return (
     <main
@@ -25,7 +36,7 @@ export default async function NewActivityPage() {
         >
           Create activity
         </h1>
-        <ActivityForm />
+        <ActivityForm defaultLocation={defaultLocation} />
       </div>
     </main>
   );

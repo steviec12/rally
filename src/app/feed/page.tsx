@@ -1,16 +1,53 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { db } from "@/lib/db";
 import { getFeedActivities } from "@/lib/activity";
 import Link from "next/link";
 import FeedList from "./feed-list";
+import FeedFilters from "./feed-filters";
+import { Suspense } from "react";
+import type { FeedFilters as FeedFiltersType } from "@/types/activity";
 
 export const dynamic = "force-dynamic";
 
-export default async function FeedPage() {
+interface FeedPageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+export default async function FeedPage({ searchParams }: FeedPageProps) {
   const session = await auth();
   if (!session?.user?.id) redirect("/");
 
-  const { activities, nextCursor } = await getFeedActivities(session.user.id);
+  const user = await db.user.findUnique({
+    where: { id: session.user.id },
+    select: { locationLat: true, locationLng: true },
+  });
+
+  const params = await searchParams;
+
+  const tags = typeof params.tags === "string"
+    ? params.tags.split(",").filter(Boolean)
+    : undefined;
+  const dateFrom = typeof params.dateFrom === "string" ? params.dateFrom : undefined;
+  const dateTo = typeof params.dateTo === "string" ? params.dateTo : undefined;
+  const distanceKm = typeof params.distanceKm === "string" ? Number(params.distanceKm) : undefined;
+  const customTags = params.customTags === "true";
+
+  const filters: FeedFiltersType = {
+    ...(tags?.length ? { tags } : {}),
+    ...(customTags ? { customTags: true } : {}),
+    ...(dateFrom ? { dateFrom } : {}),
+    ...(dateTo ? { dateTo } : {}),
+    ...(distanceKm && user?.locationLat != null && user?.locationLng != null
+      ? { distanceKm, userLat: user.locationLat, userLng: user.locationLng }
+      : {}),
+  };
+
+  const { activities, nextCursor } = await getFeedActivities(
+    session.user.id,
+    undefined,
+    filters,
+  );
 
   return (
     <main
@@ -49,7 +86,15 @@ export default async function FeedPage() {
           </Link>
         </div>
 
-        <FeedList initialActivities={activities} initialNextCursor={nextCursor} />
+        <Suspense>
+          <FeedFilters hasLocation={user?.locationLat != null && user?.locationLng != null} />
+        </Suspense>
+
+        <FeedList
+          initialActivities={activities}
+          initialNextCursor={nextCursor}
+          filters={filters}
+        />
 
         <div style={{ marginTop: 32, textAlign: "center" }}>
           <Link

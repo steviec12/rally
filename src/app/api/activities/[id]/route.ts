@@ -76,6 +76,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       tags: sanitizeTags(b.tags),
       dateTime: new Date(b.dateTime as string),
       location: (b.location as string).trim(),
+      locationLat: typeof b.locationLat === "number" ? b.locationLat : activity.locationLat,
+      locationLng: typeof b.locationLng === "number" ? b.locationLng : activity.locationLng,
       maxSpots: b.maxSpots as number,
       description: typeof b.description === "string" ? b.description.trim() || null : null,
     },

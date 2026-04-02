@@ -2,6 +2,13 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { ACTIVITY_TAGS } from "@/lib/tags";
+import dynamic from "next/dynamic";
+
+const LocationPicker = dynamic(
+  () => import("@/app/components/location-picker"),
+  { ssr: false },
+);
 
 type Field = "title" | "dateTime" | "location" | "spots" | "tags" | "description" | null;
 
@@ -11,11 +18,18 @@ type InitialData = {
   tags: string[];
   dateTime: string;
   location: string;
+  locationLat: number;
+  locationLng: number;
   maxSpots: number;
   description?: string | null;
 };
 
-export default function ActivityForm({ initialData }: { initialData?: InitialData }) {
+interface ActivityFormProps {
+  initialData?: InitialData;
+  defaultLocation?: { lat: number; lng: number };
+}
+
+export default function ActivityForm({ initialData, defaultLocation }: ActivityFormProps) {
   const router = useRouter();
   const dateInputRef = useRef<HTMLInputElement>(null);
 
@@ -28,6 +42,16 @@ export default function ActivityForm({ initialData }: { initialData?: InitialDat
   const [tagInput, setTagInput] = useState("");
   const [dateTime, setDateTime] = useState(initialData?.dateTime ? toLocalInput(initialData.dateTime) : "");
   const [location, setLocation] = useState(initialData?.location ?? "");
+  const [locationLat, setLocationLat] = useState<number | null>(
+    initialData?.locationLat && initialData.locationLat !== 0
+      ? initialData.locationLat
+      : defaultLocation?.lat ?? null,
+  );
+  const [locationLng, setLocationLng] = useState<number | null>(
+    initialData?.locationLng && initialData.locationLng !== 0
+      ? initialData.locationLng
+      : defaultLocation?.lng ?? null,
+  );
   const [maxSpots, setMaxSpots] = useState(initialData?.maxSpots ?? 2);
   const [description, setDescription] = useState(initialData?.description ?? "");
   const [activeField, setActiveField] = useState<Field>(null);
@@ -95,6 +119,8 @@ export default function ActivityForm({ initialData }: { initialData?: InitialDat
           tags,
           dateTime,
           location,
+          locationLat,
+          locationLng,
           maxSpots,
           description: description || null,
         }),
@@ -142,27 +168,61 @@ export default function ActivityForm({ initialData }: { initialData?: InitialDat
       <div style={{ padding: "24px 24px 0" }}>
         {/* Tags row */}
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16, alignItems: "center" }}>
-          {tags.map((tag) => (
-            <span
+          {ACTIVITY_TAGS.map((tag) => (
+            <button
               key={tag}
-              onClick={() => setTags((p) => p.filter((t) => t !== tag))}
+              type="button"
+              onClick={() =>
+                setTags((p) =>
+                  p.includes(tag) ? p.filter((t) => t !== tag) : [...p, tag],
+                )
+              }
               style={{
                 padding: "4px 10px",
                 borderRadius: "100px",
-                background: "var(--violet-bg)",
-                border: "1px solid rgba(139,92,246,0.25)",
-                color: "var(--violet)",
+                background: tags.includes(tag)
+                  ? "linear-gradient(135deg, var(--fuchsia), var(--violet))"
+                  : "var(--violet-bg)",
+                border: tags.includes(tag)
+                  ? "1px solid transparent"
+                  : "1px solid rgba(139,92,246,0.25)",
+                color: tags.includes(tag) ? "#fff" : "var(--violet)",
                 fontSize: 12,
                 fontFamily: "var(--font-body)",
                 fontWeight: 700,
                 cursor: "pointer",
                 userSelect: "none",
+                transition: "all 0.15s ease",
               }}
-              title="Click to remove"
             >
-              {tag} ×
-            </span>
+              {tag}
+            </button>
           ))}
+
+          {/* Custom tags (not in predefined list) */}
+          {tags
+            .filter((t) => !(ACTIVITY_TAGS as readonly string[]).includes(t))
+            .map((tag) => (
+              <span
+                key={tag}
+                onClick={() => setTags((p) => p.filter((t) => t !== tag))}
+                style={{
+                  padding: "4px 10px",
+                  borderRadius: "100px",
+                  background: "linear-gradient(135deg, var(--fuchsia), var(--violet))",
+                  border: "1px solid transparent",
+                  color: "#fff",
+                  fontSize: 12,
+                  fontFamily: "var(--font-body)",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  userSelect: "none",
+                }}
+                title="Click to remove"
+              >
+                {tag} ×
+              </span>
+            ))}
 
           {showTagInput ? (
             <input
@@ -201,7 +261,7 @@ export default function ActivityForm({ initialData }: { initialData?: InitialDat
                 cursor: "pointer",
               }}
             >
-              + add tag
+              + custom
             </button>
           )}
         </div>
@@ -317,7 +377,7 @@ export default function ActivityForm({ initialData }: { initialData?: InitialDat
             onChange={(e) => setLocation(e.target.value)}
             onFocus={() => setActiveField("location")}
             onBlur={() => setActiveField(null)}
-            placeholder="Where is it?"
+            placeholder="Name this spot (e.g. Venice Beach Courts)"
             style={{
               flex: 1,
               background: "transparent",
@@ -332,6 +392,31 @@ export default function ActivityForm({ initialData }: { initialData?: InitialDat
           />
         </div>
         {errors.location && <p style={errorStyle}>{errors.location}</p>}
+
+        {/* Map picker */}
+        <div style={{ margin: "8px 0" }}>
+          <LocationPicker
+            lat={locationLat}
+            lng={locationLng}
+            onLocationChange={(lat, lng) => {
+              setLocationLat(lat);
+              setLocationLng(lng);
+            }}
+          />
+          {locationLat != null && locationLng != null && (
+            <p
+              style={{
+                fontFamily: "var(--font-body)",
+                fontSize: 11,
+                color: "var(--text-muted)",
+                marginTop: 4,
+                paddingLeft: 4,
+              }}
+            >
+              Drag the pin or tap the map to adjust
+            </p>
+          )}
+        </div>
 
         {/* Spots stepper */}
         <div
