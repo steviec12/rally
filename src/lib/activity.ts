@@ -1,5 +1,17 @@
 import { db } from "@/lib/db";
-import type { FeedActivity } from "@/types/activity";
+import type { FeedActivity, FeedFilters } from "@/types/activity";
+
+export function buildFeedWhereClause(
+  userId: string,
+  filters?: FeedFilters,
+  now: Date = new Date()
+) {
+  return {
+    status: "open" as const,
+    dateTime: { gt: now },
+    hostId: { not: userId },
+  };
+}
 
 // Matches a cuid() ID — 25 chars starting with 'c'
 const CUID_REGEX = /^c[a-z0-9]{24}$/;
