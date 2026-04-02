@@ -1,4 +1,56 @@
 import { db } from "@/lib/db";
+import type { FeedActivity } from "@/types/activity";
+
+// Matches a cuid() ID — 25 chars starting with 'c'
+const CUID_REGEX = /^c[a-z0-9]{24}$/;
+
+const FEED_PAGE_SIZE = 10;
+
+interface FeedResult {
+  activities: FeedActivity[];
+  nextCursor: string | null;
+}
+
+export async function getFeedActivities(
+  userId: string,
+  cursor?: string
+): Promise<FeedResult> {
+  if (cursor && !CUID_REGEX.test(cursor)) {
+    return { activities: [], nextCursor: null };
+  }
+
+  const rows = await db.activity.findMany({
+    where: {
+      status: "open",
+      dateTime: { gt: new Date() },
+      hostId: { not: userId },
+    },
+    orderBy: { dateTime: "asc" },
+    take: FEED_PAGE_SIZE + 1,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    select: {
+      id: true,
+      title: true,
+      tags: true,
+      dateTime: true,
+      location: true,
+      maxSpots: true,
+      host: { select: { id: true, name: true, image: true } },
+      _count: { select: { joinRequests: { where: { status: "approved" } } } },
+    },
+  });
+
+  const hasMore = rows.length > FEED_PAGE_SIZE;
+  const page = hasMore ? rows.slice(0, FEED_PAGE_SIZE) : rows;
+  const nextCursor = hasMore ? page[page.length - 1].id : null;
+
+  const activities: FeedActivity[] = page.map((a) => ({
+    ...a,
+    dateTime: a.dateTime.toISOString(),
+  }));
+
+  return { activities, nextCursor };
+}
 
 type CancelResult =
   | { success: true; error?: never }
