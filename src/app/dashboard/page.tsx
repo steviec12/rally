@@ -206,6 +206,21 @@ export default async function DashboardPage() {
                     ) : editable ? (
                       <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
                         <Link
+                          href={`/activities/${a.id}`}
+                          style={{
+                            fontSize: 12,
+                            fontFamily: "var(--font-body)",
+                            fontWeight: 600,
+                            color: "var(--violet)",
+                            textDecoration: "none",
+                            padding: "4px 10px",
+                            borderRadius: "100px",
+                            border: "1.5px solid var(--violet)",
+                          }}
+                        >
+                          View
+                        </Link>
+                        <Link
                           href={`/activities/${a.id}/edit`}
                           style={{
                             fontSize: 12,
@@ -248,6 +263,23 @@ export default async function DashboardPage() {
             }}
           >
             Browse activities 🔥
+          </Link>
+          <Link
+            href="/requests"
+            style={{
+              display: "block",
+              textAlign: "center",
+              padding: "12px",
+              borderRadius: "100px",
+              background: "linear-gradient(135deg, var(--fuchsia), var(--violet))",
+              color: "#fff",
+              fontFamily: "var(--font-body)",
+              fontWeight: 700,
+              fontSize: 15,
+              textDecoration: "none",
+            }}
+          >
+            My Requests
           </Link>
           <Link
             href="/activities/new"

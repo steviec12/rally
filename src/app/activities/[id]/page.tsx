@@ -1,9 +1,11 @@
 import { redirect, notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { getJoinRequestsForHost } from "@/lib/join-request";
 import Image from "next/image";
 import Link from "next/link";
 import JoinButton from "@/app/components/join-button";
+import BackButton from "@/app/components/back-button";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +46,20 @@ export default async function ActivityDetailPage({
 
   const isHost = activity.host.id === session.user.id;
   const existingRequest = activity.joinRequests[0] ?? null;
+
+  // Host sees all requests with scores; others see only approved participants
+  const allJoinRequests = isHost
+    ? await getJoinRequestsForHost(id)
+    : await db.joinRequest.findMany({
+        where: { activityId: id, status: "approved" },
+        select: {
+          id: true,
+          status: true,
+          compatibilityScore: true,
+          createdAt: true,
+          user: { select: { id: true, name: true, image: true } },
+        },
+      });
   const spotsLeft = activity.maxSpots - activity._count.joinRequests;
   const isPast = activity.dateTime <= new Date();
   const isCancelled = activity.status === "cancelled";
@@ -63,21 +79,8 @@ export default async function ActivityDetailPage({
       style={{ background: "var(--bg)" }}
     >
       <div style={{ width: "100%", maxWidth: 520 }}>
-        {/* Back link */}
-        <Link
-          href="/feed"
-          style={{
-            fontFamily: "var(--font-body)",
-            fontSize: 14,
-            fontWeight: 600,
-            color: "var(--text-muted)",
-            textDecoration: "none",
-            marginBottom: 16,
-            display: "inline-block",
-          }}
-        >
-          &larr; Back to feed
-        </Link>
+        {/* Back button */}
+        <BackButton />
 
         {/* Card */}
         <div
@@ -292,6 +295,61 @@ export default async function ActivityDetailPage({
             />
           </div>
         </div>
+
+        {/* Join Requests / Participants */}
+        {allJoinRequests.length > 0 || isHost ? (
+          <div style={{ marginTop: 20 }}>
+            <p
+              style={{
+                fontFamily: "var(--font-outfit), sans-serif",
+                fontWeight: 800,
+                fontSize: 13,
+                color: "var(--text-muted)",
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
+                marginBottom: 12,
+              }}
+            >
+              {isHost
+                ? `Join Requests (${allJoinRequests.length})`
+                : `Going (${allJoinRequests.length})`}
+            </p>
+
+            {allJoinRequests.length === 0 ? (
+              <div
+                style={{
+                  padding: "20px 24px",
+                  borderRadius: 20,
+                  background: "var(--surface)",
+                  border: "1px solid var(--border)",
+                  textAlign: "center",
+                  color: "var(--text-muted)",
+                  fontFamily: "var(--font-body)",
+                  fontSize: 14,
+                }}
+              >
+                No requests yet
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                }}
+              >
+                {allJoinRequests.map((jr) => (
+                  <JoinRequestRow
+                    key={jr.id}
+                    joinRequest={jr}
+                    showScore={isHost}
+                    showStatus={isHost}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        ) : null}
       </div>
     </main>
   );
@@ -334,6 +392,144 @@ function JoinAction({
     return <StatusBadge text="This activity is full" variant="muted" />;
   }
   return <JoinButton activityId={activityId} />;
+}
+
+function JoinRequestRow({
+  joinRequest,
+  showScore = true,
+  showStatus = true,
+}: {
+  joinRequest: {
+    id: string;
+    status: string;
+    compatibilityScore: number | null;
+    user: { id: string; name: string | null; image: string | null };
+  };
+  showScore?: boolean;
+  showStatus?: boolean;
+}) {
+  const statusStyles: Record<string, { bg: string; border: string; color: string }> = {
+    pending: {
+      bg: "rgba(255,202,40,0.1)",
+      border: "1px solid rgba(255,202,40,0.3)",
+      color: "#D4A017",
+    },
+    approved: {
+      bg: "rgba(45,212,168,0.1)",
+      border: "1px solid rgba(45,212,168,0.3)",
+      color: "#2DD4A8",
+    },
+    declined: {
+      bg: "var(--fuchsia-bg)",
+      border: "1px solid var(--border)",
+      color: "var(--text-muted)",
+    },
+  };
+
+  const ss = statusStyles[joinRequest.status] ?? statusStyles.pending;
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        padding: "12px 16px",
+        borderRadius: 12,
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+      }}
+    >
+      {/* Avatar + Name */}
+      <Link
+        href={`/user/${joinRequest.user.id}`}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          textDecoration: "none",
+          flex: 1,
+          minWidth: 0,
+        }}
+      >
+        <div
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: "50%",
+            overflow: "hidden",
+            background: "var(--fuchsia-bg)",
+            flexShrink: 0,
+            position: "relative",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {joinRequest.user.image ? (
+            <Image
+              src={joinRequest.user.image}
+              alt={joinRequest.user.name ?? "User"}
+              fill
+              style={{ objectFit: "cover" }}
+              unoptimized
+            />
+          ) : (
+            <span style={{ fontSize: 14 }}>👤</span>
+          )}
+        </div>
+        <span
+          style={{
+            fontFamily: "var(--font-body)",
+            fontSize: 14,
+            fontWeight: 600,
+            color: "var(--text-primary)",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {joinRequest.user.name ?? "Anonymous"}
+        </span>
+      </Link>
+
+      {/* Score — host only */}
+      {showScore && joinRequest.compatibilityScore != null && (
+        <span
+          style={{
+            padding: "3px 10px",
+            borderRadius: "100px",
+            background: "linear-gradient(135deg, var(--fuchsia), var(--violet))",
+            color: "#fff",
+            fontSize: 12,
+            fontFamily: "var(--font-body)",
+            fontWeight: 700,
+            flexShrink: 0,
+          }}
+        >
+          {Math.round(joinRequest.compatibilityScore)}
+        </span>
+      )}
+
+      {/* Status pill — host only */}
+      {showStatus && <span
+        style={{
+          padding: "3px 10px",
+          borderRadius: "100px",
+          background: ss.bg,
+          border: ss.border,
+          color: ss.color,
+          fontSize: 11,
+          fontFamily: "var(--font-body)",
+          fontWeight: 700,
+          textTransform: "capitalize",
+          flexShrink: 0,
+        }}
+      >
+        {joinRequest.status}
+      </span>}
+    </div>
+  );
 }
 
 function StatusBadge({
