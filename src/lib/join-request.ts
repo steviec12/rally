@@ -66,6 +66,24 @@ function isUniqueConstraintError(error: unknown): boolean {
     && (error as { code: unknown }).code === "P2002";
 }
 
+const JOIN_REQUEST_SELECT = {
+  id: true,
+  status: true,
+  compatibilityScore: true,
+  createdAt: true,
+  user: {
+    select: { id: true, name: true, image: true },
+  },
+} as const;
+
+export async function getJoinRequestsForHost(activityId: string) {
+  return db.joinRequest.findMany({
+    where: { activityId },
+    orderBy: { compatibilityScore: "desc" as const },
+    select: JOIN_REQUEST_SELECT,
+  });
+}
+
 export async function createJoinRequest(
   activityId: string,
   userId: string,
