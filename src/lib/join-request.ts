@@ -88,6 +88,7 @@ export async function updateJoinRequestStatus(
   joinRequestId: string,
   hostUserId: string,
   newStatus: "approved" | "declined",
+  expectedActivityId?: string,
 ): Promise<UpdateJoinRequestResult> {
   const joinRequest = await db.joinRequest.findUnique({
     where: { id: joinRequestId },
@@ -104,6 +105,10 @@ export async function updateJoinRequestStatus(
 
   if (!joinRequest) {
     return { success: false, error: "Join request not found.", status: 404 };
+  }
+
+  if (expectedActivityId && joinRequest.activityId !== expectedActivityId) {
+    return { success: false, error: "Join request does not belong to this activity.", status: 404 };
   }
 
   if (joinRequest.activity.hostId !== hostUserId) {

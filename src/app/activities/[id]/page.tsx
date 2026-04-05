@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import JoinButton from "@/app/components/join-button";
 import BackButton from "@/app/components/back-button";
+import JoinRequestActions from "@/app/components/join-request-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -344,6 +345,8 @@ export default async function ActivityDetailPage({
                     joinRequest={jr}
                     showScore={isHost}
                     showStatus={isHost}
+                    isHost={isHost}
+                    activityId={activity.id}
                   />
                 ))}
               </div>
@@ -398,6 +401,8 @@ function JoinRequestRow({
   joinRequest,
   showScore = true,
   showStatus = true,
+  isHost = false,
+  activityId,
 }: {
   joinRequest: {
     id: string;
@@ -407,6 +412,8 @@ function JoinRequestRow({
   };
   showScore?: boolean;
   showStatus?: boolean;
+  isHost?: boolean;
+  activityId?: string;
 }) {
   const statusStyles: Record<string, { bg: string; border: string; color: string }> = {
     pending: {
@@ -511,23 +518,30 @@ function JoinRequestRow({
         </span>
       )}
 
-      {/* Status pill — host only */}
-      {showStatus && <span
-        style={{
-          padding: "3px 10px",
-          borderRadius: "100px",
-          background: ss.bg,
-          border: ss.border,
-          color: ss.color,
-          fontSize: 11,
-          fontFamily: "var(--font-body)",
-          fontWeight: 700,
-          textTransform: "capitalize",
-          flexShrink: 0,
-        }}
-      >
-        {joinRequest.status}
-      </span>}
+      {/* Host: approve/decline for pending, status pill for resolved */}
+      {isHost && activityId && joinRequest.status === "pending" ? (
+        <JoinRequestActions
+          activityId={activityId}
+          joinRequestId={joinRequest.id}
+        />
+      ) : (
+        showStatus && <span
+          style={{
+            padding: "3px 10px",
+            borderRadius: "100px",
+            background: ss.bg,
+            border: ss.border,
+            color: ss.color,
+            fontSize: 11,
+            fontFamily: "var(--font-body)",
+            fontWeight: 700,
+            textTransform: "capitalize",
+            flexShrink: 0,
+          }}
+        >
+          {joinRequest.status}
+        </span>
+      )}
     </div>
   );
 }
