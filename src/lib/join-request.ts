@@ -1,9 +1,9 @@
 import { db } from "@/lib/db";
 import { calculateCompatibilityScore } from "@/lib/scoring";
 import type { ScoringUser, ScoringActivity, RejectionReason } from "@/types/scoring";
-import type { JoinRequestResult } from "@/types/join-request";
+import type { JoinRequestResult, UpdateJoinRequestResult } from "@/types/join-request";
 
-export type { JoinRequestResult };
+export type { JoinRequestResult, UpdateJoinRequestResult };
 
 export function mapRejectionToError(reason: RejectionReason): { error: string; status: 403 | 409 } {
   switch (reason) {
@@ -82,6 +82,59 @@ export async function getJoinRequestsForHost(activityId: string) {
     orderBy: { compatibilityScore: "desc" as const },
     select: JOIN_REQUEST_SELECT,
   });
+}
+
+export async function updateJoinRequestStatus(
+  joinRequestId: string,
+  hostUserId: string,
+  newStatus: "approved" | "declined",
+): Promise<UpdateJoinRequestResult> {
+  const joinRequest = await db.joinRequest.findUnique({
+    where: { id: joinRequestId },
+    include: {
+      activity: {
+        include: {
+          _count: {
+            select: { joinRequests: { where: { status: "approved" } } },
+          },
+        },
+      },
+    },
+  });
+
+  if (!joinRequest) {
+    return { success: false, error: "Join request not found.", status: 404 };
+  }
+
+  if (joinRequest.activity.hostId !== hostUserId) {
+    return {
+      success: false,
+      error: "Only the activity host can update join requests.",
+      status: 403,
+    };
+  }
+
+  if (joinRequest.status !== "pending") {
+    return {
+      success: false,
+      error: "This join request has already been resolved.",
+      status: 409,
+    };
+  }
+
+  if (
+    newStatus === "approved" &&
+    joinRequest.activity._count.joinRequests >= joinRequest.activity.maxSpots
+  ) {
+    return { success: false, error: "This activity is full.", status: 409 };
+  }
+
+  await db.joinRequest.update({
+    where: { id: joinRequestId },
+    data: { status: newStatus },
+  });
+
+  return { success: true };
 }
 
 export async function createJoinRequest(
