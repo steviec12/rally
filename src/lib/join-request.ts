@@ -139,6 +139,16 @@ export async function updateJoinRequestStatus(
     data: { status: newStatus },
   });
 
+  if (
+    newStatus === "approved" &&
+    joinRequest.activity._count.joinRequests + 1 >= joinRequest.activity.maxSpots
+  ) {
+    await db.activity.update({
+      where: { id: joinRequest.activity.id },
+      data: { status: "full" },
+    });
+  }
+
   return { success: true };
 }
 
