@@ -40,6 +40,14 @@ export async function createRating(
     };
   }
 
+  if (activity.status === "cancelled") {
+    return {
+      success: false,
+      error: "Cannot rate participants of a cancelled activity.",
+      status: 403,
+    };
+  }
+
   // TODO: implement remaining validation and creation
   return { success: false, error: "Not implemented.", status: 400 };
 }
