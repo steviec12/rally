@@ -157,6 +157,22 @@ describe('updateJoinRequestStatus', () => {
     expect(mockActivityUpdate).not.toHaveBeenCalled();
   });
 
+  it('does not flip activity status when declining at capacity', async () => {
+    mockFindUnique.mockResolvedValue({
+      ...mockJoinRequest,
+      activity: {
+        ...mockJoinRequest.activity,
+        maxSpots: 4,
+        _count: { joinRequests: 3 }, // at capacity minus 1, but declining
+      },
+    });
+    mockUpdate.mockResolvedValue({ ...mockJoinRequest, status: 'declined' });
+
+    await updateJoinRequestStatus('jr-1', 'host-1', 'declined');
+
+    expect(mockActivityUpdate).not.toHaveBeenCalled();
+  });
+
   it('successfully declines a pending request', async () => {
     mockFindUnique.mockResolvedValue(mockJoinRequest);
     mockUpdate.mockResolvedValue({ ...mockJoinRequest, status: 'declined' });
