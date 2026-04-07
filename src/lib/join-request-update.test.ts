@@ -141,6 +141,22 @@ describe('updateJoinRequestStatus', () => {
     });
   });
 
+  it('does not flip activity status when spots remain after approval', async () => {
+    mockFindUnique.mockResolvedValue({
+      ...mockJoinRequest,
+      activity: {
+        ...mockJoinRequest.activity,
+        maxSpots: 4,
+        _count: { joinRequests: 1 }, // 1 approved + this = 2, still under 4
+      },
+    });
+    mockUpdate.mockResolvedValue({ ...mockJoinRequest, status: 'approved' });
+
+    await updateJoinRequestStatus('jr-1', 'host-1', 'approved');
+
+    expect(mockActivityUpdate).not.toHaveBeenCalled();
+  });
+
   it('successfully declines a pending request', async () => {
     mockFindUnique.mockResolvedValue(mockJoinRequest);
     mockUpdate.mockResolvedValue({ ...mockJoinRequest, status: 'declined' });
