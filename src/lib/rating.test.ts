@@ -167,4 +167,33 @@ describe('createRating', () => {
       });
     });
   });
+
+  describe('happy path', () => {
+    it('creates a rating when host rates an approved participant', async () => {
+      const pastDate = new Date(Date.now() - 86400000);
+      mockActivityFindUnique.mockResolvedValue({
+        id: 'activity-1',
+        hostId: 'host-1',
+        dateTime: pastDate,
+        status: 'completed',
+      });
+      mockJoinRequestFindMany.mockResolvedValue([{ userId: 'user-1' }]);
+      mockRatingCreate.mockResolvedValue({ id: 'r1', score: 4 });
+
+      const result = await createRating('host-1', 'user-1', 'activity-1', 4);
+
+      expect(result).toEqual({
+        success: true,
+        rating: { id: 'r1', score: 4 },
+      });
+      expect(mockRatingCreate).toHaveBeenCalledWith({
+        data: {
+          raterId: 'host-1',
+          rateeId: 'user-1',
+          activityId: 'activity-1',
+          score: 4,
+        },
+      });
+    });
+  });
 });
