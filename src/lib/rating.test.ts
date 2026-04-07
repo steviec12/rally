@@ -145,4 +145,26 @@ describe('createRating', () => {
       });
     });
   });
+
+  describe('ratee not a participant', () => {
+    it('returns 404 when ratee is not host and has no approved join request', async () => {
+      const pastDate = new Date(Date.now() - 86400000);
+      mockActivityFindUnique.mockResolvedValue({
+        id: 'activity-1',
+        hostId: 'host-1',
+        dateTime: pastDate,
+        status: 'completed',
+      });
+      // Rater is host, ratee has no join request
+      mockJoinRequestFindMany.mockResolvedValue([]);
+
+      const result = await createRating('host-1', 'stranger', 'activity-1', 4);
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Ratee is not a participant of this activity.',
+        status: 404,
+      });
+    });
+  });
 });
