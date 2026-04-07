@@ -48,6 +48,22 @@ export async function createRating(
     };
   }
 
+  const approvedJoinRequests = await db.joinRequest.findMany({
+    where: { activityId, status: "approved", userId: { in: [raterId, rateeId] } },
+    select: { userId: true },
+  });
+
+  const approvedUserIds = new Set(approvedJoinRequests.map((jr: { userId: string }) => jr.userId));
+
+  const raterIsParticipant = raterId === activity.hostId || approvedUserIds.has(raterId);
+  if (!raterIsParticipant) {
+    return {
+      success: false,
+      error: "You must be a participant to rate.",
+      status: 403,
+    };
+  }
+
   // TODO: implement remaining validation and creation
   return { success: false, error: "Not implemented.", status: 400 };
 }
