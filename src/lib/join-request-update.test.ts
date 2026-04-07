@@ -7,6 +7,9 @@ vi.mock('@/lib/db', () => ({
       findUnique: vi.fn(),
       update: vi.fn(),
     },
+    activity: {
+      update: vi.fn(),
+    },
   },
 }));
 
@@ -16,6 +19,7 @@ import { updateJoinRequestStatus } from './join-request';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const mockFindUnique = db.joinRequest.findUnique as any;
 const mockUpdate = db.joinRequest.update as any;
+const mockActivityUpdate = db.activity.update as any;
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 // Fixture: a pending join request with activity context
@@ -114,6 +118,26 @@ describe('updateJoinRequestStatus', () => {
     expect(mockUpdate).toHaveBeenCalledWith({
       where: { id: 'jr-1' },
       data: { status: 'approved' },
+    });
+  });
+
+  it('flips activity status to full when last spot is approved', async () => {
+    mockFindUnique.mockResolvedValue({
+      ...mockJoinRequest,
+      activity: {
+        ...mockJoinRequest.activity,
+        maxSpots: 4,
+        _count: { joinRequests: 3 }, // 3 approved, approving this makes 4 = maxSpots
+      },
+    });
+    mockUpdate.mockResolvedValue({ ...mockJoinRequest, status: 'approved' });
+    mockActivityUpdate.mockResolvedValue({});
+
+    await updateJoinRequestStatus('jr-1', 'host-1', 'approved');
+
+    expect(mockActivityUpdate).toHaveBeenCalledWith({
+      where: { id: 'activity-1' },
+      data: { status: 'full' },
     });
   });
 
