@@ -124,4 +124,25 @@ describe('createRating', () => {
       });
     });
   });
+
+  describe('rater not a participant', () => {
+    it('returns 403 when rater is not host and has no approved join request', async () => {
+      const pastDate = new Date(Date.now() - 86400000);
+      mockActivityFindUnique.mockResolvedValue({
+        id: 'activity-1',
+        hostId: 'host-1',
+        dateTime: pastDate,
+        status: 'completed',
+      });
+      mockJoinRequestFindMany.mockResolvedValue([]);
+
+      const result = await createRating('stranger', 'ratee-1', 'activity-1', 4);
+
+      expect(result).toEqual({
+        success: false,
+        error: 'You must be a participant to rate.',
+        status: 403,
+      });
+    });
+  });
 });
