@@ -126,6 +126,21 @@ describe('createJoinRequest', () => {
     });
   });
 
+  it('returns 409 when activity status is full', async () => {
+    mockActivityFindUnique.mockResolvedValue({
+      ...mockActivity,
+      status: 'full',
+    });
+    mockUserFindUnique.mockResolvedValue(mockUser);
+
+    const result = await createJoinRequest('activity-1', 'user-1');
+    expect(result).toEqual({
+      success: false,
+      error: 'This activity is full.',
+      status: 409,
+    });
+  });
+
   it('returns rejection error when scoring rejects (self_join)', async () => {
     mockActivityFindUnique.mockResolvedValue(mockActivity);
     mockUserFindUnique.mockResolvedValue(mockUser);

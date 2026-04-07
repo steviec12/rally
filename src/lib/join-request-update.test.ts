@@ -7,6 +7,10 @@ vi.mock('@/lib/db', () => ({
       findUnique: vi.fn(),
       update: vi.fn(),
     },
+    activity: {
+      update: vi.fn(),
+    },
+    $transaction: vi.fn(),
   },
 }));
 
@@ -16,6 +20,8 @@ import { updateJoinRequestStatus } from './join-request';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const mockFindUnique = db.joinRequest.findUnique as any;
 const mockUpdate = db.joinRequest.update as any;
+const mockActivityUpdate = db.activity.update as any;
+const mockTransaction = db.$transaction as any;
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 // Fixture: a pending join request with activity context
@@ -115,6 +121,57 @@ describe('updateJoinRequestStatus', () => {
       where: { id: 'jr-1' },
       data: { status: 'approved' },
     });
+  });
+
+  it('flips activity status to full when last spot is approved (via transaction)', async () => {
+    mockFindUnique.mockResolvedValue({
+      ...mockJoinRequest,
+      activity: {
+        ...mockJoinRequest.activity,
+        maxSpots: 4,
+        _count: { joinRequests: 3 }, // 3 approved, approving this makes 4 = maxSpots
+      },
+    });
+    mockTransaction.mockResolvedValue([]);
+
+    await updateJoinRequestStatus('jr-1', 'host-1', 'approved');
+
+    expect(mockTransaction).toHaveBeenCalled();
+    expect(mockUpdate).toHaveBeenCalled();
+    expect(mockActivityUpdate).toHaveBeenCalled();
+  });
+
+  it('does not flip activity status when spots remain after approval', async () => {
+    mockFindUnique.mockResolvedValue({
+      ...mockJoinRequest,
+      activity: {
+        ...mockJoinRequest.activity,
+        maxSpots: 4,
+        _count: { joinRequests: 1 }, // 1 approved + this = 2, still under 4
+      },
+    });
+    mockUpdate.mockResolvedValue({ ...mockJoinRequest, status: 'approved' });
+
+    await updateJoinRequestStatus('jr-1', 'host-1', 'approved');
+
+    expect(mockTransaction).not.toHaveBeenCalled();
+    expect(mockUpdate).toHaveBeenCalled();
+  });
+
+  it('does not flip activity status when declining at capacity', async () => {
+    mockFindUnique.mockResolvedValue({
+      ...mockJoinRequest,
+      activity: {
+        ...mockJoinRequest.activity,
+        maxSpots: 4,
+        _count: { joinRequests: 3 }, // at capacity minus 1, but declining
+      },
+    });
+    mockUpdate.mockResolvedValue({ ...mockJoinRequest, status: 'declined' });
+
+    await updateJoinRequestStatus('jr-1', 'host-1', 'declined');
+
+    expect(mockActivityUpdate).not.toHaveBeenCalled();
   });
 
   it('successfully declines a pending request', async () => {

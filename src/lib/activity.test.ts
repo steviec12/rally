@@ -9,7 +9,7 @@ describe('buildFeedWhereClause', () => {
   it('returns base where clause when no filters provided', () => {
     const result = buildFeedWhereClause(USER_ID, undefined, NOW);
     expect(result).toEqual({
-      status: 'open',
+      status: { in: ['open', 'full'] },
       dateTime: { gt: NOW },
       hostId: { not: USER_ID },
     });
@@ -66,7 +66,7 @@ describe('buildFeedWhereClause', () => {
       dateTo: '2025-08-01T00:00:00Z',
     };
     const result = buildFeedWhereClause(USER_ID, filters, NOW);
-    expect(result.status).toBe('open');
+    expect(result.status).toEqual({ in: ['open', 'full'] });
     expect(result.hostId).toEqual({ not: USER_ID });
     expect(result.tags).toEqual({ hasSome: ['hiking'] });
     expect(result.dateTime).toEqual({
@@ -79,7 +79,7 @@ describe('buildFeedWhereClause', () => {
     const filters: FeedFilters = { distanceKm: 10, userLat: 34, userLng: -118 };
     const result = buildFeedWhereClause(USER_ID, filters, NOW);
     expect(result).toEqual({
-      status: 'open',
+      status: { in: ['open', 'full'] },
       dateTime: { gt: NOW },
       hostId: { not: USER_ID },
     });

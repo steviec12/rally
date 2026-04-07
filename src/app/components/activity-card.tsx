@@ -27,6 +27,7 @@ export default function ActivityCard({
   host,
 }: ActivityCardProps) {
   const spotsLeft = maxSpots - spotsApproved;
+  const isFull = spotsLeft <= 0;
   const formattedDate = new Date(dateTime).toLocaleString("en-US", {
     weekday: "short",
     month: "short",
@@ -111,7 +112,7 @@ export default function ActivityCard({
                 color: spotsLeft <= 2 ? "var(--fuchsia)" : "var(--text-secondary)",
               }}
             >
-              {spotsLeft} spot{spotsLeft !== 1 ? "s" : ""} left
+              {isFull ? "Full" : `${spotsLeft} spot${spotsLeft !== 1 ? "s" : ""} left`}
             </span>
           </div>
         </div>

@@ -134,10 +134,27 @@ export async function updateJoinRequestStatus(
     return { success: false, error: "This activity is full.", status: 409 };
   }
 
-  await db.joinRequest.update({
-    where: { id: joinRequestId },
-    data: { status: newStatus },
-  });
+  const shouldMarkFull =
+    newStatus === "approved" &&
+    joinRequest.activity._count.joinRequests + 1 >= joinRequest.activity.maxSpots;
+
+  if (shouldMarkFull) {
+    await db.$transaction([
+      db.joinRequest.update({
+        where: { id: joinRequestId },
+        data: { status: newStatus },
+      }),
+      db.activity.update({
+        where: { id: joinRequest.activity.id },
+        data: { status: "full" },
+      }),
+    ]);
+  } else {
+    await db.joinRequest.update({
+      where: { id: joinRequestId },
+      data: { status: newStatus },
+    });
+  }
 
   return { success: true };
 }
@@ -174,6 +191,10 @@ export async function createJoinRequest(
 
   if (activity.status === "cancelled") {
     return { success: false, error: "This activity has been cancelled.", status: 409 };
+  }
+
+  if (activity.status === "full") {
+    return { success: false, error: "This activity is full.", status: 409 };
   }
 
   const result = calculateCompatibilityScore(
