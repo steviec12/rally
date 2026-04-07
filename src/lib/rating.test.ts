@@ -196,4 +196,26 @@ describe('createRating', () => {
       });
     });
   });
+
+  describe('duplicate rating', () => {
+    it('returns 409 when unique constraint is violated', async () => {
+      const pastDate = new Date(Date.now() - 86400000);
+      mockActivityFindUnique.mockResolvedValue({
+        id: 'activity-1',
+        hostId: 'host-1',
+        dateTime: pastDate,
+        status: 'completed',
+      });
+      mockJoinRequestFindMany.mockResolvedValue([{ userId: 'user-1' }]);
+      mockRatingCreate.mockRejectedValue({ code: 'P2002' });
+
+      const result = await createRating('host-1', 'user-1', 'activity-1', 4);
+
+      expect(result).toEqual({
+        success: false,
+        error: 'You have already rated this participant for this activity.',
+        status: 409,
+      });
+    });
+  });
 });
