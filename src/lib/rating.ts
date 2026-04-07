@@ -14,6 +14,14 @@ export async function createRating(
     };
   }
 
+  if (raterId === rateeId) {
+    return {
+      success: false,
+      error: "You cannot rate yourself.",
+      status: 403,
+    };
+  }
+
   // TODO: implement remaining validation and creation
   return { success: false, error: "Not implemented.", status: 400 };
 }
