@@ -73,6 +73,9 @@ export async function createRating(
     };
   }
 
-  // TODO: implement rating creation
-  return { success: false, error: "Not implemented.", status: 400 };
+  const rating = await db.rating.create({
+    data: { raterId, rateeId, activityId, score },
+  });
+
+  return { success: true, rating: { id: rating.id, score: rating.score } };
 }
