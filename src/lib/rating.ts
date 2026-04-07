@@ -1,3 +1,4 @@
+import { db } from "@/lib/db";
 import type { RatingResult } from "@/types/rating";
 
 export async function createRating(
@@ -20,6 +21,15 @@ export async function createRating(
       error: "You cannot rate yourself.",
       status: 403,
     };
+  }
+
+  const activity = await db.activity.findUnique({
+    where: { id: activityId },
+    select: { id: true, hostId: true, dateTime: true, status: true },
+  });
+
+  if (!activity) {
+    return { success: false, error: "Activity not found.", status: 404 };
   }
 
   // TODO: implement remaining validation and creation
