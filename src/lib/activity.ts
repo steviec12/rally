@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import type { ActivityStatus } from "@/generated/prisma/client";
 import type { FeedActivity, FeedFilters } from "@/types/activity";
 import { filterByDistance } from "@/lib/geo";
 import { ACTIVITY_TAGS } from "@/lib/tags";
@@ -19,7 +20,7 @@ export function buildFeedWhereClause(
   }
 
   return {
-    status: "open" as const,
+    status: { in: ["open", "full"] as ActivityStatus[] },
     dateTime,
     hostId: { not: userId },
     ...(filters?.tags?.length ? { tags: { hasSome: filters.tags } } : {}),

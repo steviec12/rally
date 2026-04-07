@@ -209,7 +209,7 @@ export default async function ActivityDetailPage({
                       spotsLeft <= 2 ? "var(--fuchsia)" : "var(--text-secondary)",
                   }}
                 >
-                  {spotsLeft} spot{spotsLeft !== 1 ? "s" : ""} left
+                  {isFull ? "Full" : `${spotsLeft} spot${spotsLeft !== 1 ? "s" : ""} left`}
                 </span>
               </div>
             </div>
