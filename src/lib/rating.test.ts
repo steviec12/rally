@@ -104,4 +104,24 @@ describe('createRating', () => {
       });
     });
   });
+
+  describe('activity cancelled', () => {
+    it('returns 403 when activity is cancelled', async () => {
+      const pastDate = new Date(Date.now() - 86400000); // yesterday
+      mockActivityFindUnique.mockResolvedValue({
+        id: 'activity-1',
+        hostId: 'host-1',
+        dateTime: pastDate,
+        status: 'cancelled',
+      });
+
+      const result = await createRating('rater-1', 'ratee-1', 'activity-1', 4);
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Cannot rate participants of a cancelled activity.',
+        status: 403,
+      });
+    });
+  });
 });
