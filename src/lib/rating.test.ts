@@ -8,7 +8,14 @@ vi.mock('@/lib/db', () => ({
   },
 }));
 
+import { db } from '@/lib/db';
 import { createRating } from './rating';
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const mockActivityFindUnique = db.activity.findUnique as any;
+const mockJoinRequestFindMany = db.joinRequest.findMany as any;
+const mockRatingCreate = db.rating.create as any;
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 describe('createRating', () => {
   beforeEach(() => {
@@ -60,6 +67,20 @@ describe('createRating', () => {
         success: false,
         error: 'You cannot rate yourself.',
         status: 403,
+      });
+    });
+  });
+
+  describe('activity not found', () => {
+    it('returns 404 when activity does not exist', async () => {
+      mockActivityFindUnique.mockResolvedValue(null);
+
+      const result = await createRating('rater-1', 'ratee-1', 'activity-1', 4);
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Activity not found.',
+        status: 404,
       });
     });
   });
