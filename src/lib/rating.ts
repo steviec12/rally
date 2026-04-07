@@ -64,6 +64,15 @@ export async function createRating(
     };
   }
 
-  // TODO: implement remaining validation and creation
+  const rateeIsParticipant = rateeId === activity.hostId || approvedUserIds.has(rateeId);
+  if (!rateeIsParticipant) {
+    return {
+      success: false,
+      error: "Ratee is not a participant of this activity.",
+      status: 404,
+    };
+  }
+
+  // TODO: implement rating creation
   return { success: false, error: "Not implemented.", status: 400 };
 }
