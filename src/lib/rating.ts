@@ -54,9 +54,10 @@ export async function createRating(
   });
 
   const approvedUserIds = new Set(approvedJoinRequests.map((jr: { userId: string }) => jr.userId));
+  const isParticipant = (userId: string) =>
+    userId === activity.hostId || approvedUserIds.has(userId);
 
-  const raterIsParticipant = raterId === activity.hostId || approvedUserIds.has(raterId);
-  if (!raterIsParticipant) {
+  if (!isParticipant(raterId)) {
     return {
       success: false,
       error: "You must be a participant to rate.",
@@ -64,8 +65,7 @@ export async function createRating(
     };
   }
 
-  const rateeIsParticipant = rateeId === activity.hostId || approvedUserIds.has(rateeId);
-  if (!rateeIsParticipant) {
+  if (!isParticipant(rateeId)) {
     return {
       success: false,
       error: "Ratee is not a participant of this activity.",
