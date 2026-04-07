@@ -218,4 +218,26 @@ describe('createRating', () => {
       });
     });
   });
+
+  describe('host can be rated by participant', () => {
+    it('allows an approved participant to rate the host', async () => {
+      const pastDate = new Date(Date.now() - 86400000);
+      mockActivityFindUnique.mockResolvedValue({
+        id: 'activity-1',
+        hostId: 'host-1',
+        dateTime: pastDate,
+        status: 'completed',
+      });
+      // user-1 has approved join request; host-1 is the host (ratee)
+      mockJoinRequestFindMany.mockResolvedValue([{ userId: 'user-1' }]);
+      mockRatingCreate.mockResolvedValue({ id: 'r2', score: 5 });
+
+      const result = await createRating('user-1', 'host-1', 'activity-1', 5);
+
+      expect(result).toEqual({
+        success: true,
+        rating: { id: 'r2', score: 5 },
+      });
+    });
+  });
 });
