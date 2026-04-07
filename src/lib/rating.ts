@@ -32,6 +32,14 @@ export async function createRating(
     return { success: false, error: "Activity not found.", status: 404 };
   }
 
+  if (activity.dateTime > new Date()) {
+    return {
+      success: false,
+      error: "You can only rate participants after the activity has ended.",
+      status: 403,
+    };
+  }
+
   // TODO: implement remaining validation and creation
   return { success: false, error: "Not implemented.", status: 400 };
 }
