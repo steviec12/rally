@@ -73,9 +73,25 @@ export async function createRating(
     };
   }
 
-  const rating = await db.rating.create({
-    data: { raterId, rateeId, activityId, score },
-  });
+  try {
+    const rating = await db.rating.create({
+      data: { raterId, rateeId, activityId, score },
+    });
 
-  return { success: true, rating: { id: rating.id, score: rating.score } };
+    return { success: true, rating: { id: rating.id, score: rating.score } };
+  } catch (error: unknown) {
+    if (isUniqueConstraintError(error)) {
+      return {
+        success: false,
+        error: "You have already rated this participant for this activity.",
+        status: 409,
+      };
+    }
+    throw error;
+  }
+}
+
+function isUniqueConstraintError(error: unknown): boolean {
+  return typeof error === "object" && error !== null && "code" in error
+    && (error as { code: unknown }).code === "P2002";
 }
