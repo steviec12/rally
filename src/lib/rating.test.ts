@@ -52,4 +52,15 @@ describe('createRating', () => {
       });
     });
   });
+
+  describe('self-rating', () => {
+    it('rejects rating yourself', async () => {
+      const result = await createRating('user-1', 'user-1', 'activity-1', 4);
+      expect(result).toEqual({
+        success: false,
+        error: 'You cannot rate yourself.',
+        status: 403,
+      });
+    });
+  });
 });
