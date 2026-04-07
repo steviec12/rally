@@ -186,6 +186,10 @@ export async function createJoinRequest(
     return { success: false, error: "This activity has been cancelled.", status: 409 };
   }
 
+  if (activity.status === "full") {
+    return { success: false, error: "This activity is full.", status: 409 };
+  }
+
   const result = calculateCompatibilityScore(
     toScoringUser(user),
     toScoringActivity(activity as DbActivity),
