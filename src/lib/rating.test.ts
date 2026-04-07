@@ -84,4 +84,24 @@ describe('createRating', () => {
       });
     });
   });
+
+  describe('activity not yet past', () => {
+    it('returns 403 when activity dateTime is in the future', async () => {
+      const futureDate = new Date(Date.now() + 86400000); // tomorrow
+      mockActivityFindUnique.mockResolvedValue({
+        id: 'activity-1',
+        hostId: 'host-1',
+        dateTime: futureDate,
+        status: 'open',
+      });
+
+      const result = await createRating('rater-1', 'ratee-1', 'activity-1', 4);
+
+      expect(result).toEqual({
+        success: false,
+        error: 'You can only rate participants after the activity has ended.',
+        status: 403,
+      });
+    });
+  });
 });
