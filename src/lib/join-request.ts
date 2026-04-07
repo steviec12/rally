@@ -134,18 +134,25 @@ export async function updateJoinRequestStatus(
     return { success: false, error: "This activity is full.", status: 409 };
   }
 
-  await db.joinRequest.update({
-    where: { id: joinRequestId },
-    data: { status: newStatus },
-  });
-
-  if (
+  const shouldMarkFull =
     newStatus === "approved" &&
-    joinRequest.activity._count.joinRequests + 1 >= joinRequest.activity.maxSpots
-  ) {
-    await db.activity.update({
-      where: { id: joinRequest.activity.id },
-      data: { status: "full" },
+    joinRequest.activity._count.joinRequests + 1 >= joinRequest.activity.maxSpots;
+
+  if (shouldMarkFull) {
+    await db.$transaction([
+      db.joinRequest.update({
+        where: { id: joinRequestId },
+        data: { status: newStatus },
+      }),
+      db.activity.update({
+        where: { id: joinRequest.activity.id },
+        data: { status: "full" },
+      }),
+    ]);
+  } else {
+    await db.joinRequest.update({
+      where: { id: joinRequestId },
+      data: { status: newStatus },
     });
   }
 

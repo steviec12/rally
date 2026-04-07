@@ -10,6 +10,7 @@ vi.mock('@/lib/db', () => ({
     activity: {
       update: vi.fn(),
     },
+    $transaction: vi.fn(),
   },
 }));
 
@@ -20,6 +21,7 @@ import { updateJoinRequestStatus } from './join-request';
 const mockFindUnique = db.joinRequest.findUnique as any;
 const mockUpdate = db.joinRequest.update as any;
 const mockActivityUpdate = db.activity.update as any;
+const mockTransaction = db.$transaction as any;
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 // Fixture: a pending join request with activity context
@@ -121,7 +123,7 @@ describe('updateJoinRequestStatus', () => {
     });
   });
 
-  it('flips activity status to full when last spot is approved', async () => {
+  it('flips activity status to full when last spot is approved (via transaction)', async () => {
     mockFindUnique.mockResolvedValue({
       ...mockJoinRequest,
       activity: {
@@ -130,15 +132,13 @@ describe('updateJoinRequestStatus', () => {
         _count: { joinRequests: 3 }, // 3 approved, approving this makes 4 = maxSpots
       },
     });
-    mockUpdate.mockResolvedValue({ ...mockJoinRequest, status: 'approved' });
-    mockActivityUpdate.mockResolvedValue({});
+    mockTransaction.mockResolvedValue([]);
 
     await updateJoinRequestStatus('jr-1', 'host-1', 'approved');
 
-    expect(mockActivityUpdate).toHaveBeenCalledWith({
-      where: { id: 'activity-1' },
-      data: { status: 'full' },
-    });
+    expect(mockTransaction).toHaveBeenCalled();
+    expect(mockUpdate).toHaveBeenCalled();
+    expect(mockActivityUpdate).toHaveBeenCalled();
   });
 
   it('does not flip activity status when spots remain after approval', async () => {
@@ -154,7 +154,8 @@ describe('updateJoinRequestStatus', () => {
 
     await updateJoinRequestStatus('jr-1', 'host-1', 'approved');
 
-    expect(mockActivityUpdate).not.toHaveBeenCalled();
+    expect(mockTransaction).not.toHaveBeenCalled();
+    expect(mockUpdate).toHaveBeenCalled();
   });
 
   it('does not flip activity status when declining at capacity', async () => {
