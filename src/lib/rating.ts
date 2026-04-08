@@ -78,6 +78,18 @@ export async function createRating(
       data: { raterId, rateeId, activityId, score },
     });
 
+    // Recalculate ratee's average rating
+    const { _avg } = await db.rating.aggregate({
+      where: { rateeId },
+      _avg: { score: true },
+    });
+    if (_avg.score !== null) {
+      await db.user.update({
+        where: { id: rateeId },
+        data: { rating: _avg.score },
+      });
+    }
+
     return { success: true, rating: { id: rating.id, score: rating.score } };
   } catch (error: unknown) {
     if (isUniqueConstraintError(error)) {

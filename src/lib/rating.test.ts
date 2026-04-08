@@ -4,7 +4,8 @@ vi.mock('@/lib/db', () => ({
   db: {
     activity: { findUnique: vi.fn() },
     joinRequest: { findMany: vi.fn() },
-    rating: { create: vi.fn() },
+    rating: { create: vi.fn(), aggregate: vi.fn() },
+    user: { update: vi.fn() },
   },
 }));
 
@@ -15,6 +16,8 @@ import { createRating } from './rating';
 const mockActivityFindUnique = db.activity.findUnique as any;
 const mockJoinRequestFindMany = db.joinRequest.findMany as any;
 const mockRatingCreate = db.rating.create as any;
+const mockRatingAggregate = db.rating.aggregate as any;
+const mockUserUpdate = db.user.update as any;
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 describe('createRating', () => {
@@ -179,6 +182,8 @@ describe('createRating', () => {
       });
       mockJoinRequestFindMany.mockResolvedValue([{ userId: 'user-1' }]);
       mockRatingCreate.mockResolvedValue({ id: 'r1', score: 4 });
+      mockRatingAggregate.mockResolvedValue({ _avg: { score: 4.0 } });
+      mockUserUpdate.mockResolvedValue({});
 
       const result = await createRating('host-1', 'user-1', 'activity-1', 4);
 
@@ -193,6 +198,33 @@ describe('createRating', () => {
           activityId: 'activity-1',
           score: 4,
         },
+      });
+    });
+  });
+
+  describe('average rating recalculation', () => {
+    it('updates ratee average rating after successful rating', async () => {
+      const pastDate = new Date(Date.now() - 86400000);
+      mockActivityFindUnique.mockResolvedValue({
+        id: 'activity-1',
+        hostId: 'host-1',
+        dateTime: pastDate,
+        status: 'completed',
+      });
+      mockJoinRequestFindMany.mockResolvedValue([{ userId: 'user-1' }]);
+      mockRatingCreate.mockResolvedValue({ id: 'r1', score: 4 });
+      mockRatingAggregate.mockResolvedValue({ _avg: { score: 3.5 } });
+      mockUserUpdate.mockResolvedValue({});
+
+      await createRating('host-1', 'user-1', 'activity-1', 4);
+
+      expect(mockRatingAggregate).toHaveBeenCalledWith({
+        where: { rateeId: 'user-1' },
+        _avg: { score: true },
+      });
+      expect(mockUserUpdate).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { rating: 3.5 },
       });
     });
   });
@@ -231,6 +263,8 @@ describe('createRating', () => {
       // user-1 has approved join request; host-1 is the host (ratee)
       mockJoinRequestFindMany.mockResolvedValue([{ userId: 'user-1' }]);
       mockRatingCreate.mockResolvedValue({ id: 'r2', score: 5 });
+      mockRatingAggregate.mockResolvedValue({ _avg: { score: 5.0 } });
+      mockUserUpdate.mockResolvedValue({});
 
       const result = await createRating('user-1', 'host-1', 'activity-1', 5);
 
