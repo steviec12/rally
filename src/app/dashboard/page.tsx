@@ -33,6 +33,28 @@ export default async function DashboardPage() {
 
   const now = new Date();
 
+  // Past activities user joined (approved) — for rating on dashboard
+  const pastJoinedActivities = await db.joinRequest.findMany({
+    where: {
+      userId: session.user.id,
+      status: "approved",
+      activity: { dateTime: { lte: now }, status: { not: "cancelled" } },
+    },
+    select: {
+      activity: {
+        select: { id: true, title: true, dateTime: true },
+      },
+    },
+    orderBy: { activity: { dateTime: "desc" } },
+  });
+
+  // Combine past hosted + past joined activities for the "Rate participants" section
+  const pastHosted = activities
+    .filter((a) => a.dateTime <= now && a.status !== "cancelled")
+    .map((a) => ({ id: a.id, title: a.title, dateTime: a.dateTime }));
+  const pastJoined = pastJoinedActivities.map((jr) => jr.activity);
+  const pastActivitiesToRate = [...pastHosted, ...pastJoined];
+
   return (
     <main
       className="flex flex-col items-center justify-center min-h-screen px-4 py-10"
@@ -137,8 +159,8 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Your activities */}
-        {activities.length > 0 && (
+        {/* Upcoming activities (hosted) */}
+        {activities.filter((a) => a.dateTime > now && a.status !== "cancelled").length > 0 && (
           <div style={{ width: "100%", borderTop: "1px solid var(--border)", paddingTop: 16 }}>
             <p
               style={{
@@ -154,9 +176,9 @@ export default async function DashboardPage() {
               Your activities
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {activities.map((a) => {
-                const editable = a.dateTime > now && a.status !== "cancelled" && a.status !== "completed";
-                return (
+              {activities
+                .filter((a) => a.dateTime > now && a.status !== "cancelled")
+                .map((a) => (
                   <div
                     key={a.id}
                     style={{
@@ -172,11 +194,10 @@ export default async function DashboardPage() {
                           fontFamily: "var(--font-body)",
                           fontWeight: 600,
                           fontSize: 14,
-                          color: a.status === "cancelled" ? "var(--text-muted)" : "var(--text-primary)",
+                          color: "var(--text-primary)",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
-                          textDecoration: a.status === "cancelled" ? "line-through" : "none",
                         }}
                       >
                         {a.title}
@@ -185,62 +206,113 @@ export default async function DashboardPage() {
                         {new Date(a.dateTime).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                       </p>
                     </div>
-                    {a.status === "cancelled" ? (
-                      <span
+                    <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                      <Link
+                        href={`/activities/${a.id}`}
                         style={{
-                          flexShrink: 0,
-                          fontSize: 11,
+                          fontSize: 12,
                           fontFamily: "var(--font-body)",
-                          fontWeight: 700,
-                          color: "var(--text-muted)",
-                          background: "var(--bg)",
-                          border: "1.5px solid var(--border)",
+                          fontWeight: 600,
+                          color: "var(--violet)",
+                          textDecoration: "none",
                           padding: "4px 10px",
                           borderRadius: "100px",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.04em",
+                          border: "1.5px solid var(--violet)",
                         }}
                       >
-                        Cancelled
-                      </span>
-                    ) : editable ? (
-                      <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                        <Link
-                          href={`/activities/${a.id}`}
-                          style={{
-                            fontSize: 12,
-                            fontFamily: "var(--font-body)",
-                            fontWeight: 600,
-                            color: "var(--violet)",
-                            textDecoration: "none",
-                            padding: "4px 10px",
-                            borderRadius: "100px",
-                            border: "1.5px solid var(--violet)",
-                          }}
-                        >
-                          View
-                        </Link>
-                        <Link
-                          href={`/activities/${a.id}/edit`}
-                          style={{
-                            fontSize: 12,
-                            fontFamily: "var(--font-body)",
-                            fontWeight: 600,
-                            color: "var(--fuchsia)",
-                            textDecoration: "none",
-                            padding: "4px 10px",
-                            borderRadius: "100px",
-                            border: "1.5px solid var(--fuchsia)",
-                          }}
-                        >
-                          Edit
-                        </Link>
-                        <CancelActivityButton activityId={a.id} />
-                      </div>
-                    ) : null}
+                        View
+                      </Link>
+                      <Link
+                        href={`/activities/${a.id}/edit`}
+                        style={{
+                          fontSize: 12,
+                          fontFamily: "var(--font-body)",
+                          fontWeight: 600,
+                          color: "var(--fuchsia)",
+                          textDecoration: "none",
+                          padding: "4px 10px",
+                          borderRadius: "100px",
+                          border: "1.5px solid var(--fuchsia)",
+                        }}
+                      >
+                        Edit
+                      </Link>
+                      <CancelActivityButton activityId={a.id} />
+                    </div>
                   </div>
-                );
-              })}
+                ))}
+            </div>
+          </div>
+        )}
+
+        {/* Past activities (hosted + joined) — rate participants */}
+        {pastActivitiesToRate.length > 0 && (
+          <div style={{ width: "100%", borderTop: "1px solid var(--border)", paddingTop: 16 }}>
+            <p
+              style={{
+                fontFamily: "var(--font-outfit), sans-serif",
+                fontWeight: 800,
+                fontSize: 13,
+                color: "var(--text-muted)",
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
+                marginBottom: 10,
+              }}
+            >
+              Rate participants
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {pastActivitiesToRate.map((a) => (
+                <div
+                  key={a.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 8,
+                  }}
+                >
+                  <div style={{ minWidth: 0 }}>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-body)",
+                        fontWeight: 600,
+                        fontSize: 14,
+                        color: "var(--text-primary)",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {a.title}
+                    </p>
+                    <p style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--text-muted)" }}>
+                      {a.dateTime.toLocaleString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
+                  <Link
+                    href={`/activities/${a.id}`}
+                    style={{
+                      fontSize: 12,
+                      fontFamily: "var(--font-body)",
+                      fontWeight: 600,
+                      color: "var(--fuchsia)",
+                      textDecoration: "none",
+                      padding: "4px 10px",
+                      borderRadius: "100px",
+                      border: "1.5px solid var(--fuchsia)",
+                      flexShrink: 0,
+                    }}
+                  >
+                    Rate
+                  </Link>
+                </div>
+              ))}
             </div>
           </div>
         )}

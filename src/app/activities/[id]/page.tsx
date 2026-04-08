@@ -7,6 +7,7 @@ import Link from "next/link";
 import JoinButton from "@/app/components/join-button";
 import BackButton from "@/app/components/back-button";
 import JoinRequestActions from "@/app/components/join-request-actions";
+import StarRating from "@/app/components/star-rating";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ export default async function ActivityDetailPage({
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/");
+  const userId = session.user.id;
 
   const { id } = await params;
 
@@ -36,7 +38,7 @@ export default async function ActivityDetailPage({
         select: { joinRequests: { where: { status: "approved" } } },
       },
       joinRequests: {
-        where: { userId: session.user.id },
+        where: { userId },
         select: { id: true, status: true },
         take: 1,
       },
@@ -45,11 +47,16 @@ export default async function ActivityDetailPage({
 
   if (!activity) notFound();
 
-  const isHost = activity.host.id === session.user.id;
+  const isHost = activity.host.id === userId;
   const existingRequest = activity.joinRequests[0] ?? null;
+  const spotsLeft = activity.maxSpots - activity._count.joinRequests;
+  const isPast = activity.dateTime <= new Date();
+  const isCancelled = activity.status === "cancelled";
+  const isFull = spotsLeft <= 0;
 
-  // Host sees all requests with scores; others see only approved participants
-  const allJoinRequests = isHost
+  // Host sees all requests (with scores) for active activities;
+  // for past activities, everyone sees only approved participants
+  const allJoinRequests = isHost && !isPast
     ? await getJoinRequestsForHost(id)
     : await db.joinRequest.findMany({
         where: { activityId: id, status: "approved" },
@@ -61,10 +68,16 @@ export default async function ActivityDetailPage({
           user: { select: { id: true, name: true, image: true } },
         },
       });
-  const spotsLeft = activity.maxSpots - activity._count.joinRequests;
-  const isPast = activity.dateTime <= new Date();
-  const isCancelled = activity.status === "cancelled";
-  const isFull = spotsLeft <= 0;
+  const isParticipant = isHost || existingRequest?.status === "approved";
+
+  // Fetch existing ratings by current user for this activity (for post-activity rating UI)
+  const existingRatings = isPast && isParticipant
+    ? await db.rating.findMany({
+        where: { activityId: id, raterId: userId },
+        select: { rateeId: true, score: true },
+      })
+    : [];
+  const ratingsByRatee = new Map(existingRatings.map((r) => [r.rateeId, r.score]));
 
   const formattedDate = activity.dateTime.toLocaleString("en-US", {
     weekday: "long",
@@ -311,9 +324,11 @@ export default async function ActivityDetailPage({
                 marginBottom: 12,
               }}
             >
-              {isHost
-                ? `Join Requests (${allJoinRequests.length})`
-                : `Going (${allJoinRequests.length})`}
+              {isPast && isParticipant
+                ? "Rate Participants"
+                : isHost
+                  ? `Join Requests (${allJoinRequests.length})`
+                  : `Going (${allJoinRequests.length})`}
             </p>
 
             {allJoinRequests.length === 0 ? (
@@ -339,14 +354,83 @@ export default async function ActivityDetailPage({
                   gap: 8,
                 }}
               >
+                {/* Host row for non-host participants to rate */}
+                {isPast && isParticipant && !isHost && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "12px 16px",
+                      borderRadius: 12,
+                      background: "var(--surface)",
+                      border: "1px solid var(--border)",
+                    }}
+                  >
+                    <Link
+                      href={`/user/${activity.host.id}`}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        textDecoration: "none",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: "50%",
+                          overflow: "hidden",
+                          background: "var(--fuchsia-bg)",
+                          flexShrink: 0,
+                          position: "relative",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {activity.host.image ? (
+                          <Image
+                            src={activity.host.image}
+                            alt={activity.host.name ?? "Host"}
+                            fill
+                            style={{ objectFit: "cover" }}
+                            unoptimized
+                          />
+                        ) : (
+                          <span style={{ fontSize: 14 }}>👤</span>
+                        )}
+                      </div>
+                      <span
+                        style={{
+                          fontFamily: "var(--font-body)",
+                          fontSize: 14,
+                          fontWeight: 600,
+                          color: "var(--text-primary)",
+                        }}
+                      >
+                        {activity.host.name ?? "Anonymous"}
+                        <span style={{ color: "var(--text-muted)", fontWeight: 400, marginLeft: 6 }}>Host</span>
+                      </span>
+                    </Link>
+                    <StarRating
+                      activityId={activity.id}
+                      rateeId={activity.host.id}
+                      existingScore={ratingsByRatee.get(activity.host.id)}
+                    />
+                  </div>
+                )}
                 {allJoinRequests.map((jr) => (
                   <JoinRequestRow
                     key={jr.id}
                     joinRequest={jr}
-                    showScore={isHost}
-                    showStatus={isHost}
+                    showScore={isHost && !isPast}
+                    showStatus={isHost && !isPast}
                     isHost={isHost}
                     activityId={activity.id}
+                    showRating={isPast && isParticipant && jr.status === "approved" && jr.user.id !== userId}
+                    existingRatingScore={ratingsByRatee.get(jr.user.id)}
                   />
                 ))}
               </div>
@@ -403,6 +487,8 @@ function JoinRequestRow({
   showStatus = true,
   isHost = false,
   activityId,
+  showRating = false,
+  existingRatingScore,
 }: {
   joinRequest: {
     id: string;
@@ -414,6 +500,8 @@ function JoinRequestRow({
   showStatus?: boolean;
   isHost?: boolean;
   activityId?: string;
+  showRating?: boolean;
+  existingRatingScore?: number;
 }) {
   const statusStyles: Record<string, { bg: string; border: string; color: string }> = {
     pending: {
@@ -523,6 +611,12 @@ function JoinRequestRow({
         <JoinRequestActions
           activityId={activityId}
           joinRequestId={joinRequest.id}
+        />
+      ) : showRating && activityId ? (
+        <StarRating
+          activityId={activityId}
+          rateeId={joinRequest.user.id}
+          existingScore={existingRatingScore}
         />
       ) : (
         showStatus && <span
