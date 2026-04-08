@@ -19,8 +19,8 @@ const USERS = [
     location: "Santa Monica, CA",
     locationLat: 34.0195,
     locationLng: -118.4912,
-    rating: 4.5,
-    activityCount: 8,
+    rating: null,
+    activityCount: 0,
   },
   {
     name: "Jordan Lee",
@@ -30,8 +30,8 @@ const USERS = [
     location: "Venice, CA",
     locationLat: 33.985,
     locationLng: -118.4695,
-    rating: 4.2,
-    activityCount: 12,
+    rating: null,
+    activityCount: 0,
   },
   {
     name: "Sam Rivera",
@@ -41,8 +41,8 @@ const USERS = [
     location: "Westwood, CA",
     locationLat: 34.0596,
     locationLng: -118.4452,
-    rating: 3.8,
-    activityCount: 3,
+    rating: null,
+    activityCount: 0,
   },
   {
     name: "Taylor Chen",
@@ -52,8 +52,8 @@ const USERS = [
     location: "Culver City, CA",
     locationLat: 34.0211,
     locationLng: -118.3965,
-    rating: 4.8,
-    activityCount: 20,
+    rating: null,
+    activityCount: 0,
   },
   {
     name: "Morgan Blake",
@@ -74,8 +74,8 @@ const USERS = [
     location: "Manhattan Beach, CA",
     locationLat: 33.8847,
     locationLng: -118.4109,
-    rating: 4.0,
-    activityCount: 6,
+    rating: null,
+    activityCount: 0,
   },
   {
     name: "Casey Nguyen",
@@ -85,8 +85,8 @@ const USERS = [
     location: "Silver Lake, LA",
     locationLat: 34.0869,
     locationLng: -118.2702,
-    rating: 3.5,
-    activityCount: 2,
+    rating: null,
+    activityCount: 0,
   },
 ];
 
@@ -248,6 +248,127 @@ async function main() {
     console.log(
       `  Created join request: ${user.name} → "${activity.title}" (score: ${jrData.score}, ${jrData.status ?? "pending"})`,
     );
+  }
+
+  // --- Past activities with real ratings ---
+  console.log("\n  Creating past activities with ratings...");
+
+  const pastActivities = [
+    {
+      hostIndex: 0, // Alex hosted
+      title: "Pickup basketball — last week",
+      tags: ["basketball", "fitness"],
+      dateTime: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000), // -7 days
+      location: "Venice Beach Courts",
+      locationLat: 33.985,
+      locationLng: -118.4695,
+      maxSpots: 4,
+      participants: [1, 3, 5], // Jordan, Taylor, Riley joined
+      // Ratings: everyone rates everyone else (host + participants)
+      ratings: [
+        // Alex (host) rates participants
+        { raterIndex: 0, rateeIndex: 1, score: 5 },
+        { raterIndex: 0, rateeIndex: 3, score: 4 },
+        { raterIndex: 0, rateeIndex: 5, score: 4 },
+        // Jordan rates others
+        { raterIndex: 1, rateeIndex: 0, score: 4 },
+        { raterIndex: 1, rateeIndex: 3, score: 5 },
+        { raterIndex: 1, rateeIndex: 5, score: 3 },
+        // Taylor rates others
+        { raterIndex: 3, rateeIndex: 0, score: 5 },
+        { raterIndex: 3, rateeIndex: 1, score: 4 },
+        { raterIndex: 3, rateeIndex: 5, score: 4 },
+        // Riley rates others
+        { raterIndex: 5, rateeIndex: 0, score: 4 },
+        { raterIndex: 5, rateeIndex: 1, score: 5 },
+        { raterIndex: 5, rateeIndex: 3, score: 5 },
+      ],
+    },
+    {
+      hostIndex: 1, // Jordan hosted
+      title: "Yoga in the park — last week",
+      tags: ["yoga", "fitness", "outdoors"],
+      dateTime: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000), // -5 days
+      location: "Palisades Park, Santa Monica",
+      locationLat: 34.0195,
+      locationLng: -118.4912,
+      maxSpots: 4,
+      participants: [0, 2, 6], // Alex, Sam, Casey joined
+      ratings: [
+        { raterIndex: 1, rateeIndex: 0, score: 5 },
+        { raterIndex: 1, rateeIndex: 2, score: 4 },
+        { raterIndex: 1, rateeIndex: 6, score: 3 },
+        { raterIndex: 0, rateeIndex: 1, score: 4 },
+        { raterIndex: 0, rateeIndex: 2, score: 3 },
+        { raterIndex: 0, rateeIndex: 6, score: 4 },
+        { raterIndex: 2, rateeIndex: 1, score: 4 },
+        { raterIndex: 2, rateeIndex: 0, score: 5 },
+        { raterIndex: 2, rateeIndex: 6, score: 3 },
+        { raterIndex: 6, rateeIndex: 1, score: 5 },
+        { raterIndex: 6, rateeIndex: 0, score: 4 },
+        { raterIndex: 6, rateeIndex: 2, score: 4 },
+      ],
+    },
+  ];
+
+  for (const pa of pastActivities) {
+    const host = createdUsers[pa.hostIndex];
+    const activity = await db.activity.create({
+      data: {
+        hostId: host.id,
+        title: pa.title,
+        description: "Completed activity with ratings.",
+        tags: pa.tags,
+        dateTime: pa.dateTime,
+        location: pa.location,
+        locationLat: pa.locationLat,
+        locationLng: pa.locationLng,
+        maxSpots: pa.maxSpots,
+        status: "completed",
+      },
+    });
+    console.log(`  Created past activity: "${pa.title}" (hosted by ${host.name})`);
+
+    // Create approved join requests for participants
+    for (const pIdx of pa.participants) {
+      await db.joinRequest.create({
+        data: {
+          activityId: activity.id,
+          userId: createdUsers[pIdx].id,
+          compatibilityScore: 80,
+          status: "approved" as JoinRequestStatus,
+        },
+      });
+    }
+
+    // Create real Rating records
+    for (const r of pa.ratings) {
+      await db.rating.create({
+        data: {
+          raterId: createdUsers[r.raterIndex].id,
+          rateeId: createdUsers[r.rateeIndex].id,
+          activityId: activity.id,
+          score: r.score,
+        },
+      });
+    }
+  }
+
+  // Recalculate all user averages from real Rating records
+  console.log("\n  Recalculating user ratings from real records...");
+  for (const user of createdUsers) {
+    const { _avg } = await db.rating.aggregate({
+      where: { rateeId: user.id },
+      _avg: { score: true },
+    });
+    const count = await db.rating.count({ where: { rateeId: user.id } });
+    if (_avg.score !== null) {
+      await db.user.update({
+        where: { id: user.id },
+        data: { rating: _avg.score, activityCount: count },
+      });
+      console.log(`    ${user.name}: rating=${_avg.score.toFixed(1)}, activityCount=${count}`);
+    }
   }
 
   console.log("\nSeed complete!");
