@@ -202,6 +202,33 @@ describe('createRating', () => {
     });
   });
 
+  describe('anonymity', () => {
+    it('does not expose rater identity in the result', async () => {
+      const pastDate = new Date(Date.now() - 86400000);
+      mockActivityFindUnique.mockResolvedValue({
+        id: 'activity-1',
+        hostId: 'host-1',
+        dateTime: pastDate,
+        status: 'completed',
+      });
+      mockJoinRequestFindMany.mockResolvedValue([{ userId: 'user-1' }]);
+      mockRatingCreate.mockResolvedValue({ id: 'r1', score: 4 });
+      mockRatingAggregate.mockResolvedValue({ _avg: { score: 4.0 } });
+      mockUserUpdate.mockResolvedValue({});
+
+      const result = await createRating('host-1', 'user-1', 'activity-1', 4);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.rating).not.toHaveProperty('raterId');
+        expect(result.rating).not.toHaveProperty('rater');
+        expect(result.rating).not.toHaveProperty('raterName');
+        expect(result.rating).not.toHaveProperty('raterEmail');
+        expect(Object.keys(result.rating)).toEqual(['id', 'score']);
+      }
+    });
+  });
+
   describe('average rating recalculation', () => {
     it('updates ratee average rating after successful rating', async () => {
       const pastDate = new Date(Date.now() - 86400000);
