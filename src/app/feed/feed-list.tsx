@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import ActivityCard from "@/app/components/activity-card";
 import type { FeedActivity, FeedFilters } from "@/types/activity";
 
@@ -93,9 +94,61 @@ export default function FeedList({ initialActivities, initialNextCursor, filters
         >
           {hasFilters ? "No activities match your filters" : "No activities yet"}
         </p>
-        <p style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "var(--text-muted)" }}>
+        <p style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "var(--text-muted)", marginBottom: 24 }}>
           {hasFilters ? "Try adjusting or clearing your filters." : "Be the first to post one!"}
         </p>
+        {hasFilters ? (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+            <Link
+              href="/feed"
+              style={{
+                padding: "12px 24px",
+                borderRadius: "100px",
+                border: "2px solid var(--border)",
+                background: "transparent",
+                color: "var(--text-secondary)",
+                fontFamily: "var(--font-body)",
+                fontWeight: 700,
+                fontSize: 14,
+                textDecoration: "none",
+              }}
+            >
+              Clear Filters
+            </Link>
+            <Link
+              href="/activities/new"
+              style={{
+                padding: "12px 24px",
+                borderRadius: "100px",
+                background: "linear-gradient(135deg, var(--fuchsia), var(--violet))",
+                color: "#fff",
+                fontFamily: "var(--font-body)",
+                fontWeight: 700,
+                fontSize: 14,
+                textDecoration: "none",
+              }}
+            >
+              Post an Activity
+            </Link>
+          </div>
+        ) : (
+          <Link
+            href="/activities/new"
+            style={{
+              display: "inline-block",
+              padding: "12px 24px",
+              borderRadius: "100px",
+              background: "linear-gradient(135deg, var(--fuchsia), var(--violet))",
+              color: "#fff",
+              fontFamily: "var(--font-body)",
+              fontWeight: 700,
+              fontSize: 14,
+              textDecoration: "none",
+            }}
+          >
+            Post an Activity
+          </Link>
+        )}
       </div>
     );
   }
