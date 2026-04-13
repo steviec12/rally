@@ -156,6 +156,14 @@ export async function updateJoinRequestStatus(
     });
   }
 
+  await db.notification.create({
+    data: {
+      userId: joinRequest.userId,
+      type: newStatus === "approved" ? "request_approved" : "request_declined",
+      activityId: joinRequest.activityId,
+    },
+  });
+
   return { success: true };
 }
 

@@ -11,6 +11,24 @@ export default async function MyRequestsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/");
 
+  // Fetch unread notifications and mark them as read atomically
+  const unreadNotifications = await db.notification.findMany({
+    where: { userId: session.user.id, read: false },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      type: true,
+      activity: { select: { id: true, title: true } },
+    },
+  });
+
+  if (unreadNotifications.length > 0) {
+    await db.notification.updateMany({
+      where: { id: { in: unreadNotifications.map((n) => n.id) } },
+      data: { read: true },
+    });
+  }
+
   const requests = await db.joinRequest.findMany({
     where: { userId: session.user.id },
     orderBy: { createdAt: "desc" },
@@ -71,6 +89,56 @@ export default async function MyRequestsPage() {
         >
           My Requests
         </h1>
+
+        {unreadNotifications.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
+            {unreadNotifications.map((n) => {
+              const approved = n.type === "request_approved";
+              return (
+                <Link
+                  key={n.id}
+                  href={`/activities/${n.activity.id}`}
+                  style={{ textDecoration: "none" }}
+                >
+                  <div
+                    style={{
+                      padding: "12px 16px",
+                      borderRadius: 12,
+                      background: approved ? "rgba(45,212,168,0.1)" : "var(--fuchsia-bg)",
+                      border: approved
+                        ? "1px solid rgba(45,212,168,0.35)"
+                        : "1px solid var(--border)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                    }}
+                  >
+                    <span style={{ fontSize: 18 }}>{approved ? "✅" : "❌"}</span>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-body)",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: approved ? "#2DD4A8" : "var(--text-secondary)",
+                        margin: 0,
+                      }}
+                    >
+                      Your request to{" "}
+                      <span style={{ color: "var(--text-primary)" }}>
+                        {n.activity.title}
+                      </span>{" "}
+                      was{" "}
+                      <span style={{ color: approved ? "#2DD4A8" : "var(--fuchsia)" }}>
+                        {approved ? "approved" : "declined"}
+                      </span>
+                      {" "}→
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
 
         {requests.length === 0 ? (
           <div
