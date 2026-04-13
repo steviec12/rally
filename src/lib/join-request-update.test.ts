@@ -10,6 +10,9 @@ vi.mock('@/lib/db', () => ({
     activity: {
       update: vi.fn(),
     },
+    notification: {
+      create: vi.fn(),
+    },
     $transaction: vi.fn(),
   },
 }));
@@ -21,6 +24,7 @@ import { updateJoinRequestStatus } from './join-request';
 const mockFindUnique = db.joinRequest.findUnique as any;
 const mockUpdate = db.joinRequest.update as any;
 const mockActivityUpdate = db.activity.update as any;
+const mockNotificationCreate = db.notification.create as any;
 const mockTransaction = db.$transaction as any;
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
@@ -113,6 +117,7 @@ describe('updateJoinRequestStatus', () => {
   it('successfully approves a pending request', async () => {
     mockFindUnique.mockResolvedValue(mockJoinRequest);
     mockUpdate.mockResolvedValue({ ...mockJoinRequest, status: 'approved' });
+    mockNotificationCreate.mockResolvedValue({});
 
     const result = await updateJoinRequestStatus('jr-1', 'host-1', 'approved');
 
@@ -120,6 +125,9 @@ describe('updateJoinRequestStatus', () => {
     expect(mockUpdate).toHaveBeenCalledWith({
       where: { id: 'jr-1' },
       data: { status: 'approved' },
+    });
+    expect(mockNotificationCreate).toHaveBeenCalledWith({
+      data: { userId: 'user-1', type: 'request_approved', activityId: 'activity-1' },
     });
   });
 
@@ -133,12 +141,16 @@ describe('updateJoinRequestStatus', () => {
       },
     });
     mockTransaction.mockResolvedValue([]);
+    mockNotificationCreate.mockResolvedValue({});
 
     await updateJoinRequestStatus('jr-1', 'host-1', 'approved');
 
     expect(mockTransaction).toHaveBeenCalled();
     expect(mockUpdate).toHaveBeenCalled();
     expect(mockActivityUpdate).toHaveBeenCalled();
+    expect(mockNotificationCreate).toHaveBeenCalledWith({
+      data: { userId: 'user-1', type: 'request_approved', activityId: 'activity-1' },
+    });
   });
 
   it('does not flip activity status when spots remain after approval', async () => {
@@ -151,11 +163,13 @@ describe('updateJoinRequestStatus', () => {
       },
     });
     mockUpdate.mockResolvedValue({ ...mockJoinRequest, status: 'approved' });
+    mockNotificationCreate.mockResolvedValue({});
 
     await updateJoinRequestStatus('jr-1', 'host-1', 'approved');
 
     expect(mockTransaction).not.toHaveBeenCalled();
     expect(mockUpdate).toHaveBeenCalled();
+    expect(mockActivityUpdate).not.toHaveBeenCalled();
   });
 
   it('does not flip activity status when declining at capacity', async () => {
@@ -168,15 +182,20 @@ describe('updateJoinRequestStatus', () => {
       },
     });
     mockUpdate.mockResolvedValue({ ...mockJoinRequest, status: 'declined' });
+    mockNotificationCreate.mockResolvedValue({});
 
     await updateJoinRequestStatus('jr-1', 'host-1', 'declined');
 
     expect(mockActivityUpdate).not.toHaveBeenCalled();
+    expect(mockNotificationCreate).toHaveBeenCalledWith({
+      data: { userId: 'user-1', type: 'request_declined', activityId: 'activity-1' },
+    });
   });
 
   it('successfully declines a pending request', async () => {
     mockFindUnique.mockResolvedValue(mockJoinRequest);
     mockUpdate.mockResolvedValue({ ...mockJoinRequest, status: 'declined' });
+    mockNotificationCreate.mockResolvedValue({});
 
     const result = await updateJoinRequestStatus('jr-1', 'host-1', 'declined');
 
@@ -184,6 +203,9 @@ describe('updateJoinRequestStatus', () => {
     expect(mockUpdate).toHaveBeenCalledWith({
       where: { id: 'jr-1' },
       data: { status: 'declined' },
+    });
+    expect(mockNotificationCreate).toHaveBeenCalledWith({
+      data: { userId: 'user-1', type: 'request_declined', activityId: 'activity-1' },
     });
   });
 });
