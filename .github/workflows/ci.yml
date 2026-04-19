@@ -17,6 +17,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Check formatting (Prettier)
+        run: npx prettier --check .
       - run: npm run lint
 
   typecheck:
@@ -80,3 +82,26 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  ai-pr-review:
+    name: AI PR Review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          direct_prompt: |
+            Review this pull request for the Rally Next.js app. Check for:
+            1. TypeScript quality — no `any` types, proper typing
+            2. Security — OWASP Top 10, especially auth() check on every API route
+            3. Architecture — business logic must be in src/lib/, not in route handlers
+            4. Test coverage — are new behaviors covered by tests?
+            5. Design system — border-radius, gradient, and hover shadow compliance
+            Be concise and actionable. Flag blockers clearly.
