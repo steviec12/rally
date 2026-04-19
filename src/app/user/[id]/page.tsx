@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { getProfileStats } from "@/lib/profile";
 import Image from "next/image";
 
 interface Props {
@@ -9,18 +10,19 @@ interface Props {
 export default async function PublicProfilePage({ params }: Props) {
   const { id } = await params;
 
-  const user = await db.user.findUnique({
-    where: { id },
-    select: {
-      name: true,
-      bio: true,
-      image: true,
-      interests: true,
-      location: true,
-      activityCount: true,
-      rating: true,
-    },
-  });
+  const [user, stats] = await Promise.all([
+    db.user.findUnique({
+      where: { id },
+      select: {
+        name: true,
+        bio: true,
+        image: true,
+        interests: true,
+        location: true,
+      },
+    }),
+    getProfileStats(id),
+  ]);
 
   if (!user) notFound();
 
@@ -127,48 +129,49 @@ export default async function PublicProfilePage({ params }: Props) {
           </div>
         )}
 
-        {/* Stats */}
-        <div
-          style={{
-            display: "flex",
-            gap: 24,
-            padding: "12px 24px",
-            borderRadius: 12,
-            background: "var(--fuchsia-bg)",
-            border: "1px solid rgba(255,45,155,0.1)",
-          }}
-        >
-          <div style={{ textAlign: "center" }}>
-            <p
-              style={{
-                fontFamily: "var(--font-outfit), sans-serif",
-                fontWeight: 800,
-                fontSize: 22,
-                color: "var(--fuchsia)",
-              }}
-            >
-              {user.activityCount}
-            </p>
-            <p style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-body)" }}>
-              activities
-            </p>
-          </div>
-          <div style={{ width: 1, background: "rgba(255,45,155,0.15)" }} />
-          <div style={{ textAlign: "center" }}>
-            <p
-              style={{
-                fontFamily: "var(--font-outfit), sans-serif",
-                fontWeight: 800,
-                fontSize: 22,
-                color: "var(--fuchsia)",
-              }}
-            >
-              {user.rating ? user.rating.toFixed(1) : "New"}
-            </p>
-            <p style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-body)" }}>
-              {user.rating ? "rating" : "no ratings yet"}
-            </p>
-          </div>
+        {/* Stats badges */}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+          <span
+            style={{
+              padding: "6px 16px",
+              borderRadius: "100px",
+              background: "var(--fuchsia-bg)",
+              border: "1px solid rgba(255,45,155,0.2)",
+              color: "var(--fuchsia)",
+              fontSize: 13,
+              fontFamily: "var(--font-body)",
+              fontWeight: 600,
+            }}
+          >
+            {stats.activitiesHosted} activities hosted
+          </span>
+          <span
+            style={{
+              padding: "6px 16px",
+              borderRadius: "100px",
+              background: "var(--violet-bg)",
+              border: "1px solid rgba(139,92,246,0.2)",
+              color: "var(--violet)",
+              fontSize: 13,
+              fontFamily: "var(--font-body)",
+              fontWeight: 600,
+            }}
+          >
+            {stats.activitiesJoined} activities joined
+          </span>
+          <span
+            style={{
+              padding: "6px 16px",
+              borderRadius: "100px",
+              background: "linear-gradient(135deg, #FF2D9B, #8B5CF6)",
+              color: "#fff",
+              fontSize: 13,
+              fontFamily: "var(--font-body)",
+              fontWeight: 700,
+            }}
+          >
+            ★ {stats.averageRating !== null ? stats.averageRating.toFixed(1) : "—"} avg rating
+          </span>
         </div>
       </div>
     </main>
