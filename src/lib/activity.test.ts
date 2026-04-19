@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildFeedWhereClause } from './activity';
+import { buildFeedWhereClause, validateActivityInput, sanitizeTags } from './activity';
 import type { FeedFilters } from '@/types/activity';
 
 const USER_ID = 'user-123';
@@ -83,5 +83,107 @@ describe('buildFeedWhereClause', () => {
       dateTime: { gt: NOW },
       hostId: { not: USER_ID },
     });
+  });
+});
+
+describe('validateActivityInput', () => {
+  const futureDate = new Date(Date.now() + 86400000).toISOString();
+
+  it('returns null for fully valid input', () => {
+    expect(
+      validateActivityInput({ title: 'Morning Run', dateTime: futureDate, location: 'Venice Beach', maxSpots: 2 })
+    ).toBeNull();
+  });
+
+  it('returns error when title is an empty string', () => {
+    expect(
+      validateActivityInput({ title: '', dateTime: futureDate, location: 'Test', maxSpots: 2 })
+    ).toEqual({ error: 'Title is required.' });
+  });
+
+  it('returns error when title is whitespace only', () => {
+    expect(
+      validateActivityInput({ title: '   ', dateTime: futureDate, location: 'Test', maxSpots: 2 })
+    ).toEqual({ error: 'Title is required.' });
+  });
+
+  it('returns error when dateTime is not a valid date string', () => {
+    expect(
+      validateActivityInput({ title: 'Test', dateTime: 'not-a-date', location: 'Test', maxSpots: 2 })
+    ).toEqual({ error: 'A valid date and time is required.' });
+  });
+
+  it('returns error when dateTime is a past date', () => {
+    const pastDate = new Date(Date.now() - 86400000).toISOString();
+    expect(
+      validateActivityInput({ title: 'Test', dateTime: pastDate, location: 'Test', maxSpots: 2 })
+    ).toEqual({ error: 'Date must be in the future.' });
+  });
+
+  it('returns error when dateTime is exactly now (not in the future)', () => {
+    const justPast = new Date(Date.now() - 1).toISOString();
+    expect(
+      validateActivityInput({ title: 'Test', dateTime: justPast, location: 'Test', maxSpots: 2 })
+    ).toEqual({ error: 'Date must be in the future.' });
+  });
+
+  it('returns error when location is an empty string', () => {
+    expect(
+      validateActivityInput({ title: 'Test', dateTime: futureDate, location: '', maxSpots: 2 })
+    ).toEqual({ error: 'Location is required.' });
+  });
+
+  it('returns error when maxSpots is 0', () => {
+    expect(
+      validateActivityInput({ title: 'Test', dateTime: futureDate, location: 'Test', maxSpots: 0 })
+    ).toEqual({ error: 'Max spots must be at least 1.' });
+  });
+
+  it('returns error when maxSpots is negative', () => {
+    expect(
+      validateActivityInput({ title: 'Test', dateTime: futureDate, location: 'Test', maxSpots: -1 })
+    ).toEqual({ error: 'Max spots must be at least 1.' });
+  });
+
+  it('returns error when maxSpots is a float (non-integer)', () => {
+    expect(
+      validateActivityInput({ title: 'Test', dateTime: futureDate, location: 'Test', maxSpots: 1.5 })
+    ).toEqual({ error: 'Max spots must be at least 1.' });
+  });
+
+  it('returns error when maxSpots is undefined', () => {
+    expect(
+      validateActivityInput({ title: 'Test', dateTime: futureDate, location: 'Test' })
+    ).toEqual({ error: 'Max spots must be at least 1.' });
+  });
+
+  it('returns error when body is empty object', () => {
+    expect(validateActivityInput({})).toEqual({ error: 'Title is required.' });
+  });
+});
+
+describe('sanitizeTags', () => {
+  it('returns empty array for non-array input', () => {
+    expect(sanitizeTags('not-an-array')).toEqual([]);
+  });
+
+  it('returns empty array for null', () => {
+    expect(sanitizeTags(null)).toEqual([]);
+  });
+
+  it('returns empty array for undefined', () => {
+    expect(sanitizeTags(undefined)).toEqual([]);
+  });
+
+  it('filters out non-string values from mixed array', () => {
+    expect(sanitizeTags(['sports', 1, null, 'music', true])).toEqual(['sports', 'music']);
+  });
+
+  it('returns all strings from a valid string array', () => {
+    expect(sanitizeTags(['sports', 'music', 'gaming'])).toEqual(['sports', 'music', 'gaming']);
+  });
+
+  it('returns empty array for empty array input', () => {
+    expect(sanitizeTags([])).toEqual([]);
   });
 });
