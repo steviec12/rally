@@ -10,12 +10,18 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'html'],
-      include: ['src/**/*.{ts,tsx}'],
+      // Unit test coverage scope: pure business logic (src/lib/) and API route handlers (src/app/api/).
+      // UI components and Server Component pages are integration/E2E tested via /e2e/home.spec.ts and Playwright.
+      include: ['src/lib/**/*.{ts,tsx}', 'src/app/api/**/*.ts'],
       exclude: [
         'src/**/*.test.{ts,tsx}',
         'src/**/*.d.ts',
         'src/generated/**',
         'src/app/layout.tsx',
+        // page.tsx Server Components and client UI components are covered by E2E tests in /e2e/home.spec.ts and Playwright.
+        'src/app/**/page.tsx',
+        'src/app/components/**',
+        'src/app/**/layout.tsx',
       ],
       thresholds: {
         branches: 70,
