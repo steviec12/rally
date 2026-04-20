@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 import { getProfileStats } from '@/lib/profile';
 import Image from 'next/image';
+import BackButton from '@/app/components/back-button';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -31,6 +32,7 @@ export default async function PublicProfilePage({ params }: Props) {
       className="flex flex-col items-center justify-center min-h-screen px-4 py-10"
       style={{ background: 'var(--bg)' }}
     >
+      <BackButton />
       <div
         style={{
           width: '100%',

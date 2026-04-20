@@ -356,6 +356,223 @@ async function main() {
     }
   }
 
+  // --- Additional test scenarios ---
+  console.log('\n  Creating additional test scenarios...');
+
+  // 1. A FULL activity (Alex hosts, 2 spots, both approved)
+  const fullGame = await db.activity.create({
+    data: {
+      hostId: createdUsers[0].id,
+      title: '1v1 Basketball challenge',
+      description: 'Quick 1v1 game. Winner buys smoothies.',
+      tags: ['basketball', 'fitness'],
+      dateTime: new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000),
+      location: 'Venice Beach Courts',
+      locationLat: 33.985,
+      locationLng: -118.4695,
+      maxSpots: 2,
+      status: 'full',
+    },
+  });
+  await db.joinRequest.create({
+    data: {
+      activityId: fullGame.id,
+      userId: createdUsers[1].id,
+      compatibilityScore: 90,
+      status: 'approved',
+    },
+  });
+  await db.joinRequest.create({
+    data: {
+      activityId: fullGame.id,
+      userId: createdUsers[3].id,
+      compatibilityScore: 85,
+      status: 'approved',
+    },
+  });
+  console.log('  Created FULL activity: "1v1 Basketball challenge" (2/2 spots filled)');
+
+  // 2. A CANCELLED activity (Sam hosts, cancelled with reason)
+  const cancelledEvent = await db.activity.create({
+    data: {
+      hostId: createdUsers[2].id,
+      title: 'Movie marathon — cancelled',
+      description: 'Was going to watch all the Marvel movies but something came up.',
+      tags: ['movies', 'food'],
+      dateTime: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000),
+      location: 'Westwood Apartments',
+      locationLat: 34.0596,
+      locationLng: -118.4452,
+      maxSpots: 6,
+      status: 'cancelled',
+      cancellationReason: 'Got called into work, sorry!',
+    },
+  });
+  console.log('  Created CANCELLED activity: "Movie marathon — cancelled"');
+
+  // 3. Activity with many pending requests (Taylor hosts, 3 spots, 5 pending)
+  const climbingSession = await db.activity.create({
+    data: {
+      hostId: createdUsers[3].id,
+      title: 'Indoor climbing session — beginners welcome',
+      description: 'V0-V3 range. Happy to teach basics. Shoes available to rent.',
+      tags: ['climbing', 'fitness'],
+      dateTime: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000),
+      location: 'Sender One Climbing, LA',
+      locationLat: 34.0211,
+      locationLng: -118.3965,
+      maxSpots: 3,
+      status: 'open',
+    },
+  });
+  for (const [idx, score] of [
+    [0, 82],
+    [1, 75],
+    [2, 68],
+    [4, 55],
+    [5, 70],
+  ] as [number, number][]) {
+    await db.joinRequest.create({
+      data: {
+        activityId: climbingSession.id,
+        userId: createdUsers[idx].id,
+        compatibilityScore: score,
+        status: 'pending',
+      },
+    });
+  }
+  console.log('  Created activity with 5 PENDING requests: "Indoor climbing session"');
+
+  // 4. More future activities for a richer feed
+  const extraActivities = [
+    {
+      hostIndex: 4, // Morgan
+      title: 'Pickup soccer at UCLA',
+      description: 'Casual 5-a-side. All levels. Bring water and cleats if you have them.',
+      tags: ['soccer', 'fitness', 'outdoors'],
+      dateTime: new Date(now.getTime() + 1.5 * 24 * 60 * 60 * 1000),
+      location: 'UCLA Intramural Fields',
+      locationLat: 34.0709,
+      locationLng: -118.4426,
+      maxSpots: 10,
+    },
+    {
+      hostIndex: 5, // Riley
+      title: 'Sunrise surf session',
+      description: 'Meeting at 6am. Bring your own board. Coffee after.',
+      tags: ['surfing', 'outdoors'],
+      dateTime: new Date(now.getTime() + 0.5 * 24 * 60 * 60 * 1000),
+      location: 'Manhattan Beach Pier',
+      locationLat: 33.8847,
+      locationLng: -118.4109,
+      maxSpots: 4,
+    },
+    {
+      hostIndex: 6, // Casey
+      title: 'Art museum visit — The Broad',
+      description: 'Free admission! Meeting at the entrance at 2pm.',
+      tags: ['art', 'museums', 'walking'],
+      dateTime: new Date(now.getTime() + 4 * 24 * 60 * 60 * 1000),
+      location: 'The Broad, Downtown LA',
+      locationLat: 34.0544,
+      locationLng: -118.2505,
+      maxSpots: 6,
+    },
+    {
+      hostIndex: 2, // Sam
+      title: 'Cooking class — homemade pasta',
+      description: 'Making fresh pasta from scratch. I have all the ingredients. BYOB.',
+      tags: ['cooking', 'food'],
+      dateTime: new Date(now.getTime() + 6 * 24 * 60 * 60 * 1000),
+      location: 'Westwood Apartments',
+      locationLat: 34.0596,
+      locationLng: -118.4452,
+      maxSpots: 4,
+    },
+    {
+      hostIndex: 0, // Alex
+      title: 'Hiking Griffith Park — Hollywood sign trail',
+      description: '6 mile loop. Moderate difficulty. Great views. Bring snacks.',
+      tags: ['hiking', 'fitness', 'outdoors'],
+      dateTime: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000),
+      location: 'Griffith Observatory Parking',
+      locationLat: 34.1184,
+      locationLng: -118.3004,
+      maxSpots: 8,
+    },
+  ];
+
+  for (const ea of extraActivities) {
+    const host = createdUsers[ea.hostIndex];
+    await db.activity.create({
+      data: {
+        hostId: host.id,
+        title: ea.title,
+        description: ea.description,
+        tags: ea.tags,
+        dateTime: ea.dateTime,
+        location: ea.location,
+        locationLat: ea.locationLat,
+        locationLng: ea.locationLng,
+        maxSpots: ea.maxSpots,
+        status: 'open',
+      },
+    });
+    console.log(`  Created activity: "${ea.title}" (hosted by ${host.name})`);
+  }
+
+  // 5. Past activity with NO ratings yet (for live rating testing)
+  const unratedPast = await db.activity.create({
+    data: {
+      hostId: createdUsers[2].id, // Sam hosts
+      title: 'Board game night — last Saturday',
+      description: 'Played Catan and Ticket to Ride. Great time!',
+      tags: ['board games', 'gaming'],
+      dateTime: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000),
+      location: 'Westwood Apartments',
+      locationLat: 34.0596,
+      locationLng: -118.4452,
+      maxSpots: 4,
+      status: 'completed',
+    },
+  });
+  // Morgan, Casey, and Alex are approved participants — NO ratings
+  for (const idx of [0, 4, 6]) {
+    await db.joinRequest.create({
+      data: {
+        activityId: unratedPast.id,
+        userId: createdUsers[idx].id,
+        compatibilityScore: 80,
+        status: 'approved',
+      },
+    });
+  }
+  console.log(
+    '  Created UNRATED past activity: "Board game night — last Saturday" (Sam + Alex + Morgan + Casey)'
+  );
+
+  // 6. Notifications for Morgan (approved + declined)
+  const morganApprovedActivity = createdActivities[0]; // Basketball
+  await db.notification.create({
+    data: {
+      userId: createdUsers[4].id,
+      type: 'request_approved',
+      activityId: morganApprovedActivity.id,
+    },
+  });
+  await db.notification.create({
+    data: { userId: createdUsers[4].id, type: 'request_declined', activityId: cancelledEvent.id },
+  });
+  // Notifications for Riley (approved for volleyball)
+  await db.notification.create({
+    data: {
+      userId: createdUsers[5].id,
+      type: 'request_approved',
+      activityId: createdActivities[4].id,
+    },
+  });
+  console.log('  Created notifications for Morgan and Riley');
+
   // Recalculate all user averages from real Rating records
   console.log('\n  Recalculating user ratings from real records...');
   for (const user of createdUsers) {
