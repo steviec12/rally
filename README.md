@@ -2,7 +2,7 @@
 
 A location-based, activity-first social platform where users post real-world activities and others request to join. Unlike Meetup or Bumble BFF, Rally focuses on spontaneous, casual meetups driven by what people want to do — not who they already know.
 
-**Live:** [rally-app.vercel.app](https://rally-app.vercel.app) (or your Vercel URL)
+**Live:** https://rally-flame.vercel.app/
 
 ## The Problem
 
