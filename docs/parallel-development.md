@@ -10,10 +10,10 @@ Without worktrees, developing two features in parallel means stashing, committin
 
 Two features needed to progress at the same time:
 
-| Feature | Branch | Directory |
-|---|---|---|
+| Feature                                           | Branch                           | Directory                                |
+| ------------------------------------------------- | -------------------------------- | ---------------------------------------- |
 | R-017 — Notify requester on join request decision | `feature/R-017-notify-requester` | `CS 7180/rally` (main working directory) |
-| R-025 — Profile activity statistics | `feature/R-025-profile-stats` | `CS 7180/rally-profile-stats` (worktree) |
+| R-025 — Profile activity statistics               | `feature/R-025-profile-stats`    | `CS 7180/rally-profile-stats` (worktree) |
 
 R-017 is fully implemented and ready to PR. Rather than waiting for it to merge before starting R-025, we used a worktree to spin up R-025 immediately on a clean branch — both directories pointing at the same repo with no conflicts.
 
@@ -25,6 +25,7 @@ git worktree add ../rally-profile-stats -b feature/R-025-profile-stats
 ```
 
 This does two things in one command:
+
 1. Creates a new branch `feature/R-025-profile-stats` off the current HEAD
 2. Checks it out into a new directory `../rally-profile-stats`
 

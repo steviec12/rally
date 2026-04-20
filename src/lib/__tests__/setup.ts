@@ -14,9 +14,7 @@ import { vi } from 'vitest';
  *   beforeEach(() => { mockAuth(auth, 'user-1'); });
  */
 export function mockAuth(authFn: unknown, userId: string | null): void {
-  (authFn as ReturnType<typeof vi.fn>).mockResolvedValue(
-    userId ? { user: { id: userId } } : null
-  );
+  (authFn as ReturnType<typeof vi.fn>).mockResolvedValue(userId ? { user: { id: userId } } : null);
 }
 
 /**

@@ -31,6 +31,7 @@ Before building any feature, answer: who specifically has this problem, what are
 See `docs/project/design-system.md` for full color tokens, typography, and shape rules.
 
 **Key rules:**
+
 - Cards `20px` · Small elements `12px` · Pills/buttons `100px` border-radius
 - Gradient: `linear-gradient(135deg, #FF2D9B, #8B5CF6)` for CTAs and highlights
 - Hover shadows: fuchsia-tinted glows, not plain grey
@@ -65,12 +66,12 @@ Each issue is implemented on its own branch. **Never push directly to `main`.** 
 
 Four agents live in `.claude/agents/`. They are **mandatory** at the stages below:
 
-| Agent | When to invoke |
-|---|---|
-| `tdd-runner` | Any pure logic or business rules (scoring, validation, data transforms) — enforces red→green→refactor with separate commits |
-| `code-reviewer` | After implementation is complete, before committing — checks architecture, design system, TS quality |
-| `pr-validator` | Before opening every PR — runs automated checks and generates the manual testing checklist |
-| `context-manager` | When context is large, before compacting, or when resuming a session |
+| Agent             | When to invoke                                                                                                              |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `tdd-runner`      | Any pure logic or business rules (scoring, validation, data transforms) — enforces red→green→refactor with separate commits |
+| `code-reviewer`   | After implementation is complete, before committing — checks architecture, design system, TS quality                        |
+| `pr-validator`    | Before opening every PR — runs automated checks and generates the manual testing checklist                                  |
+| `context-manager` | When context is large, before compacting, or when resuming a session                                                        |
 
 Never skip these. If a stage is reached without running the required agent, stop and run it before proceeding.
 
@@ -96,6 +97,7 @@ Apply the red-green-refactor cycle for all **pure logic and business rules** (sc
 3. **REFACTOR** — Clean up the code while keeping tests green
 
 Each cycle is its own commit set — never combined:
+
 - `test(scope): add failing test for [behavior]`
 - `feat(scope): implement [behavior] to pass test`
 - `refactor(scope): [what was improved]`
@@ -115,11 +117,13 @@ Use **conventional commits** format: `type(scope): description`
 **Scope:** the feature area, e.g. `(scoring)`, `(auth)`, `(activity)`
 
 **TDD commit pattern** — these three commits must never be combined:
+
 1. `test(scoring): add failing test for [behavior]`
 2. `feat(scoring): implement [behavior] to pass test`
 3. `refactor(scoring): [what was improved]`
 
 **Rules:**
+
 - Keep messages concise but descriptive
 - Never combine test + implementation in the same commit
 - Push to origin after each complete red-green-refactor cycle
@@ -128,6 +132,7 @@ Use **conventional commits** format: `type(scope): description`
 ## Do's and Don'ts
 
 **Do:**
+
 - Keep scoring logic as pure functions with no database dependencies so they are easily testable
 - Use TypeScript strict mode — no `any` types
 - Write small, focused commits with descriptive messages following the pattern: `test(scope): ...`, `feat(scope): ...`, `refactor(scope): ...`
@@ -137,6 +142,7 @@ Use **conventional commits** format: `type(scope): description`
 - Be honest — if you don't know something, say "I don't know" or "my best guess is..." — do not make things up; all answers should be based on known facts or resources
 
 **Don't:**
+
 - Don't put business logic in API route handlers directly — extract to `src/lib/`
 - Don't use client components unless interactivity is required
 - Don't skip writing tests before implementation during TDD phases
@@ -150,32 +156,39 @@ Use **conventional commits** format: `type(scope): description`
 Run the `security-reviewer` agent before merging any PR that touches auth, API routes, or user input.
 
 **Authentication & Access Control (A01):**
+
 - Every API route and server action must call `auth()` and check the session before proceeding
 - Verify object ownership — never let user A access user B's data by guessing an ID
 - Use NextAuth's built-in CSRF protection — never bypass it
 
 **Data Protection (A02):**
+
 - Never commit secrets — use `.env.local` only
 - Passwords hashed with bcrypt — never store or log plaintext
 - Keep JWT payload minimal (user ID only)
 
 **Injection Prevention (A03):**
+
 - Use Prisma for ALL database access — parameterized by default
 - Never use raw SQL or string concatenation in queries
 - Never use `dangerouslySetInnerHTML`
 
 **Input Validation (A04, A08):**
+
 - Validate all input on the server side — client validation is UX only
 - Reject unexpected fields — don't spread user input into Prisma queries
 
 **XSS Prevention (A07):**
+
 - React escapes output by default — never bypass with `dangerouslySetInnerHTML`
 - Sanitize user-generated content before rendering
 
 **Dependency Security (A06):**
+
 - `npm audit` runs in CI on every push
 - Review changelogs before upgrading auth or database dependencies
 
 **Secret Scanning:**
+
 - Gitleaks runs in CI — never commit `.env` files
 - If a secret is accidentally committed, rotate it immediately

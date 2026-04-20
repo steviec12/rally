@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
-import ActivityCard from "@/app/components/activity-card";
-import type { FeedActivity, FeedFilters } from "@/types/activity";
+import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+import ActivityCard from '@/app/components/activity-card';
+import type { FeedActivity, FeedFilters } from '@/types/activity';
 
 interface FeedListProps {
   initialActivities: FeedActivity[];
@@ -13,20 +13,20 @@ interface FeedListProps {
 
 function buildFilterQuery(filters?: FeedFilters): string {
   const params = new URLSearchParams();
-  if (filters?.tags?.length) params.set("tags", filters.tags.join(","));
-  if (filters?.customTags) params.set("customTags", "true");
-  if (filters?.dateFrom) params.set("dateFrom", filters.dateFrom);
-  if (filters?.dateTo) params.set("dateTo", filters.dateTo);
-  if (filters?.distanceKm != null) params.set("distanceKm", String(filters.distanceKm));
+  if (filters?.tags?.length) params.set('tags', filters.tags.join(','));
+  if (filters?.customTags) params.set('customTags', 'true');
+  if (filters?.dateFrom) params.set('dateFrom', filters.dateFrom);
+  if (filters?.dateTo) params.set('dateTo', filters.dateTo);
+  if (filters?.distanceKm != null) params.set('distanceKm', String(filters.distanceKm));
   const qs = params.toString();
-  return qs ? `&${qs}` : "";
+  return qs ? `&${qs}` : '';
 }
 
 export default function FeedList({ initialActivities, initialNextCursor, filters }: FeedListProps) {
   const [activities, setActivities] = useState<FeedActivity[]>(initialActivities);
   const [nextCursor, setNextCursor] = useState<string | null>(initialNextCursor);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   const filtersKey = JSON.stringify(filters ?? {});
   const prevFiltersKey = useRef(filtersKey);
@@ -44,7 +44,7 @@ export default function FeedList({ initialActivities, initialNextCursor, filters
   async function loadMore() {
     if (!nextCursor || loading) return;
     setLoading(true);
-    setError("");
+    setError('');
     try {
       let cursor = nextCursor;
       let newActivities: FeedActivity[] = [];
@@ -62,7 +62,7 @@ export default function FeedList({ initialActivities, initialNextCursor, filters
       setActivities((prev) => [...prev, ...newActivities]);
       setNextCursor(cursor);
     } catch (err) {
-      console.error("Failed to load more activities:", err);
+      console.error('Failed to load more activities:', err);
       setError("Couldn't load more activities. Please try again.");
     } finally {
       setLoading(false);
@@ -75,42 +75,49 @@ export default function FeedList({ initialActivities, initialNextCursor, filters
     return (
       <div
         style={{
-          textAlign: "center",
-          padding: "48px 24px",
-          background: "var(--surface)",
+          textAlign: 'center',
+          padding: '48px 24px',
+          background: 'var(--surface)',
           borderRadius: 20,
-          border: "1px solid var(--border)",
+          border: '1px solid var(--border)',
         }}
       >
-        <p style={{ fontSize: 32, marginBottom: 12 }}>{hasFilters ? "🔍" : "🏃"}</p>
+        <p style={{ fontSize: 32, marginBottom: 12 }}>{hasFilters ? '🔍' : '🏃'}</p>
         <p
           style={{
-            fontFamily: "var(--font-outfit), sans-serif",
+            fontFamily: 'var(--font-outfit), sans-serif',
             fontWeight: 800,
             fontSize: 18,
-            color: "var(--text-primary)",
+            color: 'var(--text-primary)',
             marginBottom: 8,
           }}
         >
-          {hasFilters ? "No activities match your filters" : "No activities yet"}
+          {hasFilters ? 'No activities match your filters' : 'No activities yet'}
         </p>
-        <p style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "var(--text-muted)", marginBottom: 24 }}>
-          {hasFilters ? "Try adjusting or clearing your filters." : "Be the first to post one!"}
+        <p
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 14,
+            color: 'var(--text-muted)',
+            marginBottom: 24,
+          }}
+        >
+          {hasFilters ? 'Try adjusting or clearing your filters.' : 'Be the first to post one!'}
         </p>
         {hasFilters ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
             <Link
               href="/feed"
               style={{
-                padding: "12px 24px",
-                borderRadius: "100px",
-                border: "2px solid var(--border)",
-                background: "transparent",
-                color: "var(--text-secondary)",
-                fontFamily: "var(--font-body)",
+                padding: '12px 24px',
+                borderRadius: '100px',
+                border: '2px solid var(--border)',
+                background: 'transparent',
+                color: 'var(--text-secondary)',
+                fontFamily: 'var(--font-body)',
                 fontWeight: 700,
                 fontSize: 14,
-                textDecoration: "none",
+                textDecoration: 'none',
               }}
             >
               Clear Filters
@@ -118,14 +125,14 @@ export default function FeedList({ initialActivities, initialNextCursor, filters
             <Link
               href="/activities/new"
               style={{
-                padding: "12px 24px",
-                borderRadius: "100px",
-                background: "linear-gradient(135deg, var(--fuchsia), var(--violet))",
-                color: "#fff",
-                fontFamily: "var(--font-body)",
+                padding: '12px 24px',
+                borderRadius: '100px',
+                background: 'linear-gradient(135deg, var(--fuchsia), var(--violet))',
+                color: '#fff',
+                fontFamily: 'var(--font-body)',
                 fontWeight: 700,
                 fontSize: 14,
-                textDecoration: "none",
+                textDecoration: 'none',
               }}
             >
               Post an Activity
@@ -135,15 +142,15 @@ export default function FeedList({ initialActivities, initialNextCursor, filters
           <Link
             href="/activities/new"
             style={{
-              display: "inline-block",
-              padding: "12px 24px",
-              borderRadius: "100px",
-              background: "linear-gradient(135deg, var(--fuchsia), var(--violet))",
-              color: "#fff",
-              fontFamily: "var(--font-body)",
+              display: 'inline-block',
+              padding: '12px 24px',
+              borderRadius: '100px',
+              background: 'linear-gradient(135deg, var(--fuchsia), var(--violet))',
+              color: '#fff',
+              fontFamily: 'var(--font-body)',
               fontWeight: 700,
               fontSize: 14,
-              textDecoration: "none",
+              textDecoration: 'none',
             }}
           >
             Post an Activity
@@ -154,7 +161,7 @@ export default function FeedList({ initialActivities, initialNextCursor, filters
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {activities.map((a) => (
         <ActivityCard
           key={a.id}
@@ -170,7 +177,14 @@ export default function FeedList({ initialActivities, initialNextCursor, filters
       ))}
 
       {error && (
-        <p style={{ textAlign: "center", fontSize: 13, color: "#CC0000", fontFamily: "var(--font-body)" }}>
+        <p
+          style={{
+            textAlign: 'center',
+            fontSize: 13,
+            color: '#CC0000',
+            fontFamily: 'var(--font-body)',
+          }}
+        >
           {error}
         </p>
       )}
@@ -180,19 +194,19 @@ export default function FeedList({ initialActivities, initialNextCursor, filters
           onClick={loadMore}
           disabled={loading}
           style={{
-            padding: "14px",
-            borderRadius: "100px",
-            border: "2px solid var(--border)",
-            background: "transparent",
-            color: loading ? "var(--text-muted)" : "var(--text-secondary)",
-            fontFamily: "var(--font-body)",
+            padding: '14px',
+            borderRadius: '100px',
+            border: '2px solid var(--border)',
+            background: 'transparent',
+            color: loading ? 'var(--text-muted)' : 'var(--text-secondary)',
+            fontFamily: 'var(--font-body)',
             fontWeight: 700,
             fontSize: 15,
-            cursor: loading ? "not-allowed" : "pointer",
+            cursor: loading ? 'not-allowed' : 'pointer',
             opacity: loading ? 0.6 : 1,
           }}
         >
-          {loading ? "Loading…" : "Load more"}
+          {loading ? 'Loading…' : 'Load more'}
         </button>
       )}
     </div>

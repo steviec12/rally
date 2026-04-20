@@ -92,11 +92,7 @@ describe('GET /api/activities', () => {
   it('passes cursor query param to getFeedActivities', async () => {
     const req = new Request('http://localhost/api/activities?cursor=test-cursor');
     await GET(req);
-    expect(mockGetFeedActivities).toHaveBeenCalledWith(
-      'user-1',
-      'test-cursor',
-      expect.any(Object)
-    );
+    expect(mockGetFeedActivities).toHaveBeenCalledWith('user-1', 'test-cursor', expect.any(Object));
   });
 
   it('fetches user location when distanceKm is provided and passes it to getFeedActivities', async () => {

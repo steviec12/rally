@@ -1,18 +1,16 @@
-import { db } from "@/lib/db";
-import type { ActivityStatus } from "@/generated/prisma/client";
-import type { FeedActivity, FeedFilters } from "@/types/activity";
-import { filterByDistance } from "@/lib/geo";
-import { ACTIVITY_TAGS } from "@/lib/tags";
+import { db } from '@/lib/db';
+import type { ActivityStatus } from '@/generated/prisma/client';
+import type { FeedActivity, FeedFilters } from '@/types/activity';
+import { filterByDistance } from '@/lib/geo';
+import { ACTIVITY_TAGS } from '@/lib/tags';
 
 export function buildFeedWhereClause(
   userId: string,
   filters?: FeedFilters,
-  now: Date = new Date(),
+  now: Date = new Date()
 ) {
   const dateFloor =
-    filters?.dateFrom && new Date(filters.dateFrom) > now
-      ? new Date(filters.dateFrom)
-      : now;
+    filters?.dateFrom && new Date(filters.dateFrom) > now ? new Date(filters.dateFrom) : now;
 
   const dateTime: Record<string, Date> = { gt: dateFloor };
   if (filters?.dateTo) {
@@ -20,7 +18,7 @@ export function buildFeedWhereClause(
   }
 
   return {
-    status: { in: ["open", "full"] as ActivityStatus[] },
+    status: { in: ['open', 'full'] as ActivityStatus[] },
     dateTime,
     hostId: { not: userId },
     ...(filters?.tags?.length ? { tags: { hasSome: filters.tags } } : {}),
@@ -40,27 +38,23 @@ interface FeedResult {
 export async function getFeedActivities(
   userId: string,
   cursor?: string,
-  filters?: FeedFilters,
+  filters?: FeedFilters
 ): Promise<FeedResult> {
   if (cursor && !CUID_REGEX.test(cursor)) {
     return { activities: [], nextCursor: null };
   }
 
   const hasDistanceFilter =
-    filters?.distanceKm != null &&
-    filters.userLat != null &&
-    filters.userLng != null;
+    filters?.distanceKm != null && filters.userLat != null && filters.userLng != null;
 
   const hasCustomTagsFilter = filters?.customTags === true;
   const needsPostFilter = hasDistanceFilter || hasCustomTagsFilter;
 
-  const fetchSize = needsPostFilter
-    ? FEED_PAGE_SIZE * 3 + 1
-    : FEED_PAGE_SIZE + 1;
+  const fetchSize = needsPostFilter ? FEED_PAGE_SIZE * 3 + 1 : FEED_PAGE_SIZE + 1;
 
   const rows = await db.activity.findMany({
     where: buildFeedWhereClause(userId, filters),
-    orderBy: { dateTime: "asc" },
+    orderBy: { dateTime: 'asc' },
     take: fetchSize,
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     select: {
@@ -73,7 +67,7 @@ export async function getFeedActivities(
       locationLng: true,
       maxSpots: true,
       host: { select: { id: true, name: true, image: true } },
-      _count: { select: { joinRequests: { where: { status: "approved" } } } },
+      _count: { select: { joinRequests: { where: { status: 'approved' } } } },
     },
   });
 
@@ -91,14 +85,12 @@ export async function getFeedActivities(
         filtered,
         filters!.userLat!,
         filters!.userLng!,
-        filters!.distanceKm!,
+        filters!.distanceKm!
       );
     }
 
     if (hasCustomTagsFilter) {
-      filtered = filtered.filter((a) =>
-        a.tags.some((t) => !predefined.includes(t)),
-      );
+      filtered = filtered.filter((a) => a.tags.some((t) => !predefined.includes(t)));
     }
 
     const page = filtered.slice(0, FEED_PAGE_SIZE);
@@ -132,21 +124,35 @@ export async function cancelActivity(
   reason?: string
 ): Promise<CancelResult> {
   const activity = await db.activity.findUnique({ where: { id: activityId } });
-  if (!activity) return { success: false as const, error: "Activity not found.", status: 404 as const };
-  if (activity.hostId !== requestingUserId) return { success: false as const, error: "Forbidden", status: 403 as const };
+  if (!activity)
+    return { success: false as const, error: 'Activity not found.', status: 404 as const };
+  if (activity.hostId !== requestingUserId)
+    return { success: false as const, error: 'Forbidden', status: 403 as const };
   if (activity.dateTime <= new Date()) {
-    return { success: false as const, error: "This activity has already started and cannot be cancelled.", status: 403 as const };
+    return {
+      success: false as const,
+      error: 'This activity has already started and cannot be cancelled.',
+      status: 403 as const,
+    };
   }
-  if (activity.status === "completed") {
-    return { success: false as const, error: "Completed activities cannot be cancelled.", status: 403 as const };
+  if (activity.status === 'completed') {
+    return {
+      success: false as const,
+      error: 'Completed activities cannot be cancelled.',
+      status: 403 as const,
+    };
   }
-  if (activity.status === "cancelled") {
-    return { success: false as const, error: "Activity is already cancelled.", status: 409 as const };
+  if (activity.status === 'cancelled') {
+    return {
+      success: false as const,
+      error: 'Activity is already cancelled.',
+      status: 409 as const,
+    };
   }
 
   await db.activity.update({
     where: { id: activityId },
-    data: { status: "cancelled", cancellationReason: reason?.trim() || null },
+    data: { status: 'cancelled', cancellationReason: reason?.trim() || null },
   });
   return { success: true as const };
 }
@@ -154,25 +160,25 @@ export async function cancelActivity(
 export function validateActivityInput(body: unknown): { error: string } | null {
   const b = body as Record<string, unknown>;
 
-  if (!b.title || typeof b.title !== "string" || b.title.trim().length < 1) {
-    return { error: "Title is required." };
+  if (!b.title || typeof b.title !== 'string' || b.title.trim().length < 1) {
+    return { error: 'Title is required.' };
   }
-  if (!b.dateTime || typeof b.dateTime !== "string" || isNaN(Date.parse(b.dateTime))) {
-    return { error: "A valid date and time is required." };
+  if (!b.dateTime || typeof b.dateTime !== 'string' || isNaN(Date.parse(b.dateTime))) {
+    return { error: 'A valid date and time is required.' };
   }
   if (new Date(b.dateTime) <= new Date()) {
-    return { error: "Date must be in the future." };
+    return { error: 'Date must be in the future.' };
   }
-  if (!b.location || typeof b.location !== "string" || b.location.trim().length < 1) {
-    return { error: "Location is required." };
+  if (!b.location || typeof b.location !== 'string' || b.location.trim().length < 1) {
+    return { error: 'Location is required.' };
   }
   if (
     b.maxSpots === undefined ||
-    typeof b.maxSpots !== "number" ||
+    typeof b.maxSpots !== 'number' ||
     b.maxSpots < 1 ||
     !Number.isInteger(b.maxSpots)
   ) {
-    return { error: "Max spots must be at least 1." };
+    return { error: 'Max spots must be at least 1.' };
   }
 
   return null;
@@ -180,5 +186,5 @@ export function validateActivityInput(body: unknown): { error: string } | null {
 
 export function sanitizeTags(tags: unknown): string[] {
   if (!Array.isArray(tags)) return [];
-  return tags.filter((t): t is string => typeof t === "string");
+  return tags.filter((t): t is string => typeof t === 'string');
 }

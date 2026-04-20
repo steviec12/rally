@@ -38,14 +38,14 @@ A good customer segment is a who-where pair (per The Mom Test, Chapter 7): a spe
 
 These are the load-bearing assumptions the product is built on. Each one is a hypothesis until we have real evidence.
 
-| Assumption | Why it matters | How to test it |
-|---|---|---|
-| People actually fail to find activity partners on short notice | The whole premise. If people's existing friend groups reliably work out, Rally has no opening. | Talk to 10–15 people in the primary segment. Ask: "Tell me about the last time you wanted to do [activity] and couldn't find anyone to go with. What did you do?" Don't ask "does this happen to you?" — ask about the last specific time. |
-| The workarounds (group chats, stories) feel broken enough to motivate switching | Even if the problem exists, the workarounds might be "good enough." Switching to a new app is high friction. | In the same conversations: "How'd that work out? Was it good enough, or did it feel like a failure?" Look for frustration, not just acknowledgment. |
-| Hosts are comfortable letting strangers join their activities | If hosts only want to meet people through existing mutual connections, compatibility scoring is irrelevant — they'll never approve an unknown. | Ask hosts: "Have you ever let someone you didn't know join an activity? How did you decide? What made you trust them?" |
-| A compatibility score is a sufficient trust signal for approval | Hosts may want more context (photos, mutual friends, a message) before approving a stranger. The score alone might not be enough. | Show wireframes or a paper prototype to 5 potential hosts. Ask them to react to a scored join request. "Would you approve this? What else would you want to know?" |
-| New users will post an activity before they have an established rating or history | Cold start problem: the value of the feed depends on activities being posted, but new users get low compatibility scores until they've done activities. | Ask potential users: "If you signed up today and had no history, would you post an activity knowing people would see a low compatibility score on your profile?" |
-| Geographic density is sufficient in the target segment | Proximity matching only works if there are enough nearby users. In low-density areas, the pool is too small. | Define "enough": at least 5–10 activities posted per week within 5 miles. Pilot in a geographically dense segment (a large university campus) before expanding. |
+| Assumption                                                                        | Why it matters                                                                                                                                          | How to test it                                                                                                                                                                                                                             |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| People actually fail to find activity partners on short notice                    | The whole premise. If people's existing friend groups reliably work out, Rally has no opening.                                                          | Talk to 10–15 people in the primary segment. Ask: "Tell me about the last time you wanted to do [activity] and couldn't find anyone to go with. What did you do?" Don't ask "does this happen to you?" — ask about the last specific time. |
+| The workarounds (group chats, stories) feel broken enough to motivate switching   | Even if the problem exists, the workarounds might be "good enough." Switching to a new app is high friction.                                            | In the same conversations: "How'd that work out? Was it good enough, or did it feel like a failure?" Look for frustration, not just acknowledgment.                                                                                        |
+| Hosts are comfortable letting strangers join their activities                     | If hosts only want to meet people through existing mutual connections, compatibility scoring is irrelevant — they'll never approve an unknown.          | Ask hosts: "Have you ever let someone you didn't know join an activity? How did you decide? What made you trust them?"                                                                                                                     |
+| A compatibility score is a sufficient trust signal for approval                   | Hosts may want more context (photos, mutual friends, a message) before approving a stranger. The score alone might not be enough.                       | Show wireframes or a paper prototype to 5 potential hosts. Ask them to react to a scored join request. "Would you approve this? What else would you want to know?"                                                                         |
+| New users will post an activity before they have an established rating or history | Cold start problem: the value of the feed depends on activities being posted, but new users get low compatibility scores until they've done activities. | Ask potential users: "If you signed up today and had no history, would you post an activity knowing people would see a low compatibility score on your profile?"                                                                           |
+| Geographic density is sufficient in the target segment                            | Proximity matching only works if there are enough nearby users. In low-density areas, the pool is too small.                                            | Define "enough": at least 5–10 activities posted per week within 5 miles. Pilot in a geographically dense segment (a large university campus) before expanding.                                                                            |
 
 ## Tech Stack
 
@@ -60,11 +60,13 @@ These are the load-bearing assumptions the product is built on. Each one is a hy
 ## Core Features (MVP)
 
 ### 1. User Authentication & Profile
+
 - Sign up / sign in via NextAuth (Google OAuth + email)
 - Profile: display name, bio, avatar, interest tags (e.g., "basketball", "hiking", "food", "gaming"), location (city/zip)
 - Users can update their profile and interests at any time
 
 ### 2. Activity Cards (CRUD)
+
 - **Create:** Host posts an activity card with:
   - Title (e.g., "Sunday morning trail run")
   - Activity type / tags (e.g., "running", "outdoors", "fitness")
@@ -77,11 +79,13 @@ These are the load-bearing assumptions the product is built on. Each one is a hy
 - **Delete:** Host can cancel an activity
 
 ### 3. Activity Feed
+
 - Default feed shows nearby activities sorted by relevance
 - Filters: activity type, date range, distance radius
 - Cards display: title, host name, date/time, location, spots remaining, activity tags
 
 ### 4. Join Requests
+
 - Users can request to join an activity (one request per activity)
 - Host sees a list of join requests ranked by compatibility score
 - Host approves or declines each request
@@ -89,14 +93,17 @@ These are the load-bearing assumptions the product is built on. Each one is a hy
 - Spots remaining updates in real time
 
 ### 5. Compatibility Scoring Algorithm
+
 This is the core differentiator and the primary feature for TDD development.
 
 **Inputs:**
+
 - Requesting user's profile (interests, location, rating)
 - Activity card details (tags, location)
 - Host's preferences (if any)
 
 **Scoring factors (weighted):**
+
 - **Shared interest tags** between requester and activity tags (weight: 40%)
 - **Proximity** — distance between requester's location and activity location (weight: 30%)
 - **User rating** — requester's average rating from past activities (weight: 20%)
@@ -105,6 +112,7 @@ This is the core differentiator and the primary feature for TDD development.
 **Output:** A normalized score from 0–100 for each join request, used to rank requests for the host.
 
 **Edge cases to handle:**
+
 - New user with no rating or history (default/neutral score)
 - User with no matching interest tags (minimum score, not zero)
 - Activity with no join requests (empty state)
@@ -113,6 +121,7 @@ This is the core differentiator and the primary feature for TDD development.
 - Activity whose date has passed (should not appear in feed)
 
 ### 6. Ratings
+
 - After an activity's date passes, participants can rate each other (1–5 stars)
 - Ratings contribute to a user's overall rating displayed on their profile
 - Ratings are anonymous
@@ -120,18 +129,23 @@ This is the core differentiator and the primary feature for TDD development.
 ## Data Models
 
 ### User
+
 - id, name, email, avatar, bio, interests (string[]), location, rating (float), activityCount (int), createdAt
 
 ### Activity
+
 - id, hostId (FK → User), title, description, tags (string[]), dateTime, location, locationLat, locationLng, maxSpots, status (open/full/completed/cancelled), createdAt
 
 ### JoinRequest
+
 - id, activityId (FK → Activity), userId (FK → User), status (pending/approved/declined), compatibilityScore (float), createdAt
 
 ### Rating
+
 - id, raterId (FK → User), rateeId (FK → User), activityId (FK → Activity), score (int 1-5), createdAt
 
 ## Out of Scope for MVP
+
 - Real-time chat/messaging between users
 - Push notifications (email only if at all)
 - Image uploads for activities
@@ -141,6 +155,7 @@ This is the core differentiator and the primary feature for TDD development.
 - Report/block system (important for production, but not MVP)
 
 ## Success Metrics (Conceptual)
+
 - Number of activities posted per week
 - Join request → approval rate
 - User return rate after first activity

@@ -22,11 +22,11 @@
 
 Produces a 0–100 score per join request:
 
-| Factor | Weight |
-|---|---|
-| Shared interest tags (requester ↔ activity tags) | 40% |
-| Proximity (requester location ↔ activity location) | 30% |
-| Requester's average rating | 20% |
-| Requester's completed activity count | 10% |
+| Factor                                             | Weight |
+| -------------------------------------------------- | ------ |
+| Shared interest tags (requester ↔ activity tags)   | 40%    |
+| Proximity (requester location ↔ activity location) | 30%    |
+| Requester's average rating                         | 20%    |
+| Requester's completed activity count               | 10%    |
 
 Key edge cases: new users (no rating/history) → neutral/default score; no matching tags → minimum score (not zero); self-join → reject; full activity → block request; past-date activity → hide from feed.

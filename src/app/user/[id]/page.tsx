@@ -1,7 +1,7 @@
-import { notFound } from "next/navigation";
-import { db } from "@/lib/db";
-import { getProfileStats } from "@/lib/profile";
-import Image from "next/image";
+import { notFound } from 'next/navigation';
+import { db } from '@/lib/db';
+import { getProfileStats } from '@/lib/profile';
+import Image from 'next/image';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -29,20 +29,20 @@ export default async function PublicProfilePage({ params }: Props) {
   return (
     <main
       className="flex flex-col items-center justify-center min-h-screen px-4 py-10"
-      style={{ background: "var(--bg)" }}
+      style={{ background: 'var(--bg)' }}
     >
       <div
         style={{
-          width: "100%",
+          width: '100%',
           maxWidth: 400,
-          background: "var(--surface)",
+          background: 'var(--surface)',
           borderRadius: 20,
-          border: "1px solid var(--border)",
-          boxShadow: "var(--shadow-lg)",
-          padding: "36px 32px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
+          border: '1px solid var(--border)',
+          boxShadow: 'var(--shadow-lg)',
+          padding: '36px 32px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
           gap: 16,
         }}
       >
@@ -51,22 +51,22 @@ export default async function PublicProfilePage({ params }: Props) {
           style={{
             width: 80,
             height: 80,
-            borderRadius: "50%",
-            overflow: "hidden",
-            border: "3px solid var(--fuchsia-bg)",
-            background: "var(--fuchsia-bg)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            position: "relative",
+            borderRadius: '50%',
+            overflow: 'hidden',
+            border: '3px solid var(--fuchsia-bg)',
+            background: 'var(--fuchsia-bg)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative',
           }}
         >
           {user.image ? (
             <Image
               src={user.image}
-              alt={user.name ?? "Avatar"}
+              alt={user.name ?? 'Avatar'}
               fill
-              style={{ objectFit: "cover" }}
+              style={{ objectFit: 'cover' }}
               unoptimized
             />
           ) : (
@@ -75,20 +75,20 @@ export default async function PublicProfilePage({ params }: Props) {
         </div>
 
         {/* Name, location, bio */}
-        <div style={{ textAlign: "center" }}>
+        <div style={{ textAlign: 'center' }}>
           <h1
             style={{
-              fontFamily: "var(--font-outfit), sans-serif",
+              fontFamily: 'var(--font-outfit), sans-serif',
               fontWeight: 800,
               fontSize: 22,
-              color: "var(--text-primary)",
-              letterSpacing: "-0.5px",
+              color: 'var(--text-primary)',
+              letterSpacing: '-0.5px',
             }}
           >
-            {user.name ?? "Anonymous"}
+            {user.name ?? 'Anonymous'}
           </h1>
           {user.location && (
-            <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 2 }}>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>
               📍 {user.location}
             </p>
           )}
@@ -96,7 +96,7 @@ export default async function PublicProfilePage({ params }: Props) {
             <p
               style={{
                 fontSize: 14,
-                color: "var(--text-secondary)",
+                color: 'var(--text-secondary)',
                 marginTop: 8,
                 lineHeight: 1.5,
               }}
@@ -108,18 +108,18 @@ export default async function PublicProfilePage({ params }: Props) {
 
         {/* Interests */}
         {user.interests.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center" }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center' }}>
             {user.interests.map((tag) => (
               <span
                 key={tag}
                 style={{
-                  padding: "4px 12px",
-                  borderRadius: "100px",
-                  background: "var(--fuchsia-bg)",
-                  border: "1px solid rgba(255,45,155,0.2)",
-                  color: "var(--fuchsia)",
+                  padding: '4px 12px',
+                  borderRadius: '100px',
+                  background: 'var(--fuchsia-bg)',
+                  border: '1px solid rgba(255,45,155,0.2)',
+                  color: 'var(--fuchsia)',
                   fontSize: 12,
-                  fontFamily: "var(--font-body)",
+                  fontFamily: 'var(--font-body)',
                   fontWeight: 600,
                 }}
               >
@@ -130,16 +130,16 @@ export default async function PublicProfilePage({ params }: Props) {
         )}
 
         {/* Stats badges */}
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
           <span
             style={{
-              padding: "6px 16px",
-              borderRadius: "100px",
-              background: "var(--fuchsia-bg)",
-              border: "1px solid rgba(255,45,155,0.2)",
-              color: "var(--fuchsia)",
+              padding: '6px 16px',
+              borderRadius: '100px',
+              background: 'var(--fuchsia-bg)',
+              border: '1px solid rgba(255,45,155,0.2)',
+              color: 'var(--fuchsia)',
               fontSize: 13,
-              fontFamily: "var(--font-body)",
+              fontFamily: 'var(--font-body)',
               fontWeight: 600,
             }}
           >
@@ -147,13 +147,13 @@ export default async function PublicProfilePage({ params }: Props) {
           </span>
           <span
             style={{
-              padding: "6px 16px",
-              borderRadius: "100px",
-              background: "var(--violet-bg)",
-              border: "1px solid rgba(139,92,246,0.2)",
-              color: "var(--violet)",
+              padding: '6px 16px',
+              borderRadius: '100px',
+              background: 'var(--violet-bg)',
+              border: '1px solid rgba(139,92,246,0.2)',
+              color: 'var(--violet)',
               fontSize: 13,
-              fontFamily: "var(--font-body)",
+              fontFamily: 'var(--font-body)',
               fontWeight: 600,
             }}
           >
@@ -161,16 +161,16 @@ export default async function PublicProfilePage({ params }: Props) {
           </span>
           <span
             style={{
-              padding: "6px 16px",
-              borderRadius: "100px",
-              background: "linear-gradient(135deg, #FF2D9B, #8B5CF6)",
-              color: "#fff",
+              padding: '6px 16px',
+              borderRadius: '100px',
+              background: 'linear-gradient(135deg, #FF2D9B, #8B5CF6)',
+              color: '#fff',
               fontSize: 13,
-              fontFamily: "var(--font-body)",
+              fontFamily: 'var(--font-body)',
               fontWeight: 700,
             }}
           >
-            ★ {stats.averageRating !== null ? stats.averageRating.toFixed(1) : "—"} avg rating
+            ★ {stats.averageRating !== null ? stats.averageRating.toFixed(1) : '—'} avg rating
           </span>
         </div>
       </div>

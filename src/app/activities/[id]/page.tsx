@@ -1,23 +1,19 @@
-import { redirect, notFound } from "next/navigation";
-import { auth } from "@/auth";
-import { db } from "@/lib/db";
-import { getJoinRequestsForHost } from "@/lib/join-request";
-import Image from "next/image";
-import Link from "next/link";
-import JoinButton from "@/app/components/join-button";
-import BackButton from "@/app/components/back-button";
-import JoinRequestActions from "@/app/components/join-request-actions";
-import StarRating from "@/app/components/star-rating";
+import { redirect, notFound } from 'next/navigation';
+import { auth } from '@/auth';
+import { db } from '@/lib/db';
+import { getJoinRequestsForHost } from '@/lib/join-request';
+import Image from 'next/image';
+import Link from 'next/link';
+import JoinButton from '@/app/components/join-button';
+import BackButton from '@/app/components/back-button';
+import JoinRequestActions from '@/app/components/join-request-actions';
+import StarRating from '@/app/components/star-rating';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
-export default async function ActivityDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function ActivityDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
-  if (!session?.user?.id) redirect("/");
+  if (!session?.user?.id) redirect('/');
   const userId = session.user.id;
 
   const { id } = await params;
@@ -35,7 +31,7 @@ export default async function ActivityDetailPage({
       status: true,
       host: { select: { id: true, name: true, image: true } },
       _count: {
-        select: { joinRequests: { where: { status: "approved" } } },
+        select: { joinRequests: { where: { status: 'approved' } } },
       },
       joinRequests: {
         where: { userId },
@@ -51,77 +47,78 @@ export default async function ActivityDetailPage({
   const existingRequest = activity.joinRequests[0] ?? null;
   const spotsLeft = activity.maxSpots - activity._count.joinRequests;
   const isPast = activity.dateTime <= new Date();
-  const isCancelled = activity.status === "cancelled";
+  const isCancelled = activity.status === 'cancelled';
   const isFull = spotsLeft <= 0;
 
   // Host sees all requests (with scores) for active activities;
   // for past activities, everyone sees only approved participants
-  const allJoinRequests = isHost && !isPast
-    ? await getJoinRequestsForHost(id)
-    : await db.joinRequest.findMany({
-        where: { activityId: id, status: "approved" },
-        select: {
-          id: true,
-          status: true,
-          compatibilityScore: true,
-          createdAt: true,
-          user: { select: { id: true, name: true, image: true } },
-        },
-      });
-  const isParticipant = isHost || existingRequest?.status === "approved";
+  const allJoinRequests =
+    isHost && !isPast
+      ? await getJoinRequestsForHost(id)
+      : await db.joinRequest.findMany({
+          where: { activityId: id, status: 'approved' },
+          select: {
+            id: true,
+            status: true,
+            compatibilityScore: true,
+            createdAt: true,
+            user: { select: { id: true, name: true, image: true } },
+          },
+        });
+  const isParticipant = isHost || existingRequest?.status === 'approved';
 
   // Fetch existing ratings by current user for this activity (for post-activity rating UI)
-  const existingRatings = isPast && isParticipant
-    ? await db.rating.findMany({
-        where: { activityId: id, raterId: userId },
-        select: { rateeId: true, score: true },
-      })
-    : [];
+  const existingRatings =
+    isPast && isParticipant
+      ? await db.rating.findMany({
+          where: { activityId: id, raterId: userId },
+          select: { rateeId: true, score: true },
+        })
+      : [];
   const ratingsByRatee = new Map(existingRatings.map((r) => [r.rateeId, r.score]));
 
-  const formattedDate = activity.dateTime.toLocaleString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
+  const formattedDate = activity.dateTime.toLocaleString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
   });
 
   return (
     <main
       className="flex flex-col items-center min-h-screen px-4 py-10"
-      style={{ background: "var(--bg)" }}
+      style={{ background: 'var(--bg)' }}
     >
-      <div style={{ width: "100%", maxWidth: 520 }}>
+      <div style={{ width: '100%', maxWidth: 520 }}>
         {/* Back button */}
         <BackButton />
 
         {/* Card */}
         <div
           style={{
-            background: "var(--surface)",
+            background: 'var(--surface)',
             borderRadius: 20,
-            border: "1px solid var(--border)",
-            boxShadow: "0 4px 20px rgba(255,45,155,0.06)",
-            overflow: "hidden",
+            border: '1px solid var(--border)',
+            boxShadow: '0 4px 20px rgba(255,45,155,0.06)',
+            overflow: 'hidden',
           }}
         >
           {/* Gradient header strip */}
           <div
             style={{
               height: 4,
-              background:
-                "linear-gradient(135deg, var(--fuchsia), var(--violet))",
+              background: 'linear-gradient(135deg, var(--fuchsia), var(--violet))',
             }}
           />
 
-          <div style={{ padding: "20px 24px 24px" }}>
+          <div style={{ padding: '20px 24px 24px' }}>
             {/* Tags */}
             {activity.tags.length > 0 && (
               <div
                 style={{
-                  display: "flex",
-                  flexWrap: "wrap",
+                  display: 'flex',
+                  flexWrap: 'wrap',
                   gap: 6,
                   marginBottom: 12,
                 }}
@@ -130,13 +127,13 @@ export default async function ActivityDetailPage({
                   <span
                     key={tag}
                     style={{
-                      padding: "4px 10px",
-                      borderRadius: "100px",
-                      background: "var(--violet-bg)",
-                      border: "1px solid rgba(139,92,246,0.2)",
-                      color: "var(--violet)",
+                      padding: '4px 10px',
+                      borderRadius: '100px',
+                      background: 'var(--violet-bg)',
+                      border: '1px solid rgba(139,92,246,0.2)',
+                      color: 'var(--violet)',
                       fontSize: 12,
-                      fontFamily: "var(--font-body)",
+                      fontFamily: 'var(--font-body)',
                       fontWeight: 700,
                     }}
                   >
@@ -149,11 +146,11 @@ export default async function ActivityDetailPage({
             {/* Title */}
             <h1
               style={{
-                fontFamily: "var(--font-outfit), sans-serif",
+                fontFamily: 'var(--font-outfit), sans-serif',
                 fontWeight: 800,
                 fontSize: 24,
-                color: "var(--text-primary)",
-                letterSpacing: "-0.5px",
+                color: 'var(--text-primary)',
+                letterSpacing: '-0.5px',
                 lineHeight: 1.3,
                 marginBottom: 8,
               }}
@@ -165,9 +162,9 @@ export default async function ActivityDetailPage({
             {activity.description && (
               <p
                 style={{
-                  fontFamily: "var(--font-body)",
+                  fontFamily: 'var(--font-body)',
                   fontSize: 15,
-                  color: "var(--text-secondary)",
+                  color: 'var(--text-secondary)',
                   lineHeight: 1.6,
                   marginBottom: 16,
                 }}
@@ -179,50 +176,49 @@ export default async function ActivityDetailPage({
             {/* Meta */}
             <div
               style={{
-                display: "flex",
-                flexDirection: "column",
+                display: 'flex',
+                flexDirection: 'column',
                 gap: 8,
                 marginBottom: 20,
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 16 }}>📅</span>
                 <span
                   style={{
-                    fontFamily: "var(--font-body)",
+                    fontFamily: 'var(--font-body)',
                     fontSize: 14,
                     fontWeight: 600,
-                    color: "var(--text-secondary)",
+                    color: 'var(--text-secondary)',
                   }}
                 >
                   {formattedDate}
                 </span>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 16 }}>📍</span>
                 <span
                   style={{
-                    fontFamily: "var(--font-body)",
+                    fontFamily: 'var(--font-body)',
                     fontSize: 14,
                     fontWeight: 600,
-                    color: "var(--text-secondary)",
+                    color: 'var(--text-secondary)',
                   }}
                 >
                   {activity.location}
                 </span>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 16 }}>👥</span>
                 <span
                   style={{
-                    fontFamily: "var(--font-body)",
+                    fontFamily: 'var(--font-body)',
                     fontSize: 14,
                     fontWeight: 700,
-                    color:
-                      spotsLeft <= 2 ? "var(--fuchsia)" : "var(--text-secondary)",
+                    color: spotsLeft <= 2 ? 'var(--fuchsia)' : 'var(--text-secondary)',
                   }}
                 >
-                  {isFull ? "Full" : `${spotsLeft} spot${spotsLeft !== 1 ? "s" : ""} left`}
+                  {isFull ? 'Full' : `${spotsLeft} spot${spotsLeft !== 1 ? 's' : ''} left`}
                 </span>
               </div>
             </div>
@@ -230,43 +226,43 @@ export default async function ActivityDetailPage({
             {/* Host */}
             <div
               style={{
-                display: "flex",
-                alignItems: "center",
+                display: 'flex',
+                alignItems: 'center',
                 gap: 10,
-                padding: "12px 0",
-                borderTop: "1px solid var(--border)",
+                padding: '12px 0',
+                borderTop: '1px solid var(--border)',
                 marginBottom: 20,
               }}
             >
               <Link
                 href={`/user/${activity.host.id}`}
                 style={{
-                  display: "flex",
-                  alignItems: "center",
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: 10,
-                  textDecoration: "none",
+                  textDecoration: 'none',
                 }}
               >
                 <div
                   style={{
                     width: 36,
                     height: 36,
-                    borderRadius: "50%",
-                    overflow: "hidden",
-                    background: "var(--fuchsia-bg)",
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    background: 'var(--fuchsia-bg)',
                     flexShrink: 0,
-                    position: "relative",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    position: 'relative',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
                   {activity.host.image ? (
                     <Image
                       src={activity.host.image}
-                      alt={activity.host.name ?? "Host"}
+                      alt={activity.host.name ?? 'Host'}
                       fill
-                      style={{ objectFit: "cover" }}
+                      style={{ objectFit: 'cover' }}
                       unoptimized
                     />
                   ) : (
@@ -276,19 +272,19 @@ export default async function ActivityDetailPage({
                 <div>
                   <span
                     style={{
-                      fontFamily: "var(--font-body)",
+                      fontFamily: 'var(--font-body)',
                       fontSize: 14,
                       fontWeight: 700,
-                      color: "var(--text-primary)",
+                      color: 'var(--text-primary)',
                     }}
                   >
-                    {activity.host.name ?? "Anonymous"}
+                    {activity.host.name ?? 'Anonymous'}
                   </span>
                   <span
                     style={{
-                      fontFamily: "var(--font-body)",
+                      fontFamily: 'var(--font-body)',
                       fontSize: 13,
-                      color: "var(--text-muted)",
+                      color: 'var(--text-muted)',
                       marginLeft: 8,
                     }}
                   >
@@ -315,17 +311,17 @@ export default async function ActivityDetailPage({
           <div style={{ marginTop: 20 }}>
             <p
               style={{
-                fontFamily: "var(--font-outfit), sans-serif",
+                fontFamily: 'var(--font-outfit), sans-serif',
                 fontWeight: 800,
                 fontSize: 13,
-                color: "var(--text-muted)",
-                letterSpacing: "0.05em",
-                textTransform: "uppercase",
+                color: 'var(--text-muted)',
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase',
                 marginBottom: 12,
               }}
             >
               {isPast && isParticipant
-                ? "Rate Participants"
+                ? 'Rate Participants'
                 : isHost
                   ? `Join Requests (${allJoinRequests.length})`
                   : `Going (${allJoinRequests.length})`}
@@ -334,13 +330,13 @@ export default async function ActivityDetailPage({
             {allJoinRequests.length === 0 ? (
               <div
                 style={{
-                  padding: "20px 24px",
+                  padding: '20px 24px',
                   borderRadius: 20,
-                  background: "var(--surface)",
-                  border: "1px solid var(--border)",
-                  textAlign: "center",
-                  color: "var(--text-muted)",
-                  fontFamily: "var(--font-body)",
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  textAlign: 'center',
+                  color: 'var(--text-muted)',
+                  fontFamily: 'var(--font-body)',
                   fontSize: 14,
                 }}
               >
@@ -349,8 +345,8 @@ export default async function ActivityDetailPage({
             ) : (
               <div
                 style={{
-                  display: "flex",
-                  flexDirection: "column",
+                  display: 'flex',
+                  flexDirection: 'column',
                   gap: 8,
                 }}
               >
@@ -358,44 +354,44 @@ export default async function ActivityDetailPage({
                 {isPast && isParticipant && !isHost && (
                   <div
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "12px 16px",
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '12px 16px',
                       borderRadius: 12,
-                      background: "var(--surface)",
-                      border: "1px solid var(--border)",
+                      background: 'var(--surface)',
+                      border: '1px solid var(--border)',
                     }}
                   >
                     <Link
                       href={`/user/${activity.host.id}`}
                       style={{
-                        display: "flex",
-                        alignItems: "center",
+                        display: 'flex',
+                        alignItems: 'center',
                         gap: 10,
-                        textDecoration: "none",
+                        textDecoration: 'none',
                       }}
                     >
                       <div
                         style={{
                           width: 32,
                           height: 32,
-                          borderRadius: "50%",
-                          overflow: "hidden",
-                          background: "var(--fuchsia-bg)",
+                          borderRadius: '50%',
+                          overflow: 'hidden',
+                          background: 'var(--fuchsia-bg)',
                           flexShrink: 0,
-                          position: "relative",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
+                          position: 'relative',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                         }}
                       >
                         {activity.host.image ? (
                           <Image
                             src={activity.host.image}
-                            alt={activity.host.name ?? "Host"}
+                            alt={activity.host.name ?? 'Host'}
                             fill
-                            style={{ objectFit: "cover" }}
+                            style={{ objectFit: 'cover' }}
                             unoptimized
                           />
                         ) : (
@@ -404,14 +400,18 @@ export default async function ActivityDetailPage({
                       </div>
                       <span
                         style={{
-                          fontFamily: "var(--font-body)",
+                          fontFamily: 'var(--font-body)',
                           fontSize: 14,
                           fontWeight: 600,
-                          color: "var(--text-primary)",
+                          color: 'var(--text-primary)',
                         }}
                       >
-                        {activity.host.name ?? "Anonymous"}
-                        <span style={{ color: "var(--text-muted)", fontWeight: 400, marginLeft: 6 }}>Host</span>
+                        {activity.host.name ?? 'Anonymous'}
+                        <span
+                          style={{ color: 'var(--text-muted)', fontWeight: 400, marginLeft: 6 }}
+                        >
+                          Host
+                        </span>
                       </span>
                     </Link>
                     <StarRating
@@ -429,7 +429,9 @@ export default async function ActivityDetailPage({
                     showStatus={isHost && !isPast}
                     isHost={isHost}
                     activityId={activity.id}
-                    showRating={isPast && isParticipant && jr.status === "approved" && jr.user.id !== userId}
+                    showRating={
+                      isPast && isParticipant && jr.status === 'approved' && jr.user.id !== userId
+                    }
                     existingRatingScore={ratingsByRatee.get(jr.user.id)}
                   />
                 ))}
@@ -466,13 +468,13 @@ function JoinAction({
   if (isPast) {
     return <StatusBadge text="This activity has ended" variant="muted" />;
   }
-  if (existingRequest?.status === "approved") {
+  if (existingRequest?.status === 'approved') {
     return <StatusBadge text="You're in!" variant="success" />;
   }
-  if (existingRequest?.status === "pending") {
+  if (existingRequest?.status === 'pending') {
     return <StatusBadge text="Request pending" variant="pending" />;
   }
-  if (existingRequest?.status === "declined") {
+  if (existingRequest?.status === 'declined') {
     return <StatusBadge text="Request declined" variant="muted" />;
   }
   if (isFull) {
@@ -505,19 +507,19 @@ function JoinRequestRow({
 }) {
   const statusStyles: Record<string, { bg: string; border: string; color: string }> = {
     pending: {
-      bg: "rgba(255,202,40,0.1)",
-      border: "1px solid rgba(255,202,40,0.3)",
-      color: "#D4A017",
+      bg: 'rgba(255,202,40,0.1)',
+      border: '1px solid rgba(255,202,40,0.3)',
+      color: '#D4A017',
     },
     approved: {
-      bg: "rgba(45,212,168,0.1)",
-      border: "1px solid rgba(45,212,168,0.3)",
-      color: "#2DD4A8",
+      bg: 'rgba(45,212,168,0.1)',
+      border: '1px solid rgba(45,212,168,0.3)',
+      color: '#2DD4A8',
     },
     declined: {
-      bg: "var(--fuchsia-bg)",
-      border: "1px solid var(--border)",
-      color: "var(--text-muted)",
+      bg: 'var(--fuchsia-bg)',
+      border: '1px solid var(--border)',
+      color: 'var(--text-muted)',
     },
   };
 
@@ -526,23 +528,23 @@ function JoinRequestRow({
   return (
     <div
       style={{
-        display: "flex",
-        alignItems: "center",
+        display: 'flex',
+        alignItems: 'center',
         gap: 12,
-        padding: "12px 16px",
+        padding: '12px 16px',
         borderRadius: 12,
-        background: "var(--surface)",
-        border: "1px solid var(--border)",
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
       }}
     >
       {/* Avatar + Name */}
       <Link
         href={`/user/${joinRequest.user.id}`}
         style={{
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
           gap: 10,
-          textDecoration: "none",
+          textDecoration: 'none',
           flex: 1,
           minWidth: 0,
         }}
@@ -551,22 +553,22 @@ function JoinRequestRow({
           style={{
             width: 32,
             height: 32,
-            borderRadius: "50%",
-            overflow: "hidden",
-            background: "var(--fuchsia-bg)",
+            borderRadius: '50%',
+            overflow: 'hidden',
+            background: 'var(--fuchsia-bg)',
             flexShrink: 0,
-            position: "relative",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           {joinRequest.user.image ? (
             <Image
               src={joinRequest.user.image}
-              alt={joinRequest.user.name ?? "User"}
+              alt={joinRequest.user.name ?? 'User'}
               fill
-              style={{ objectFit: "cover" }}
+              style={{ objectFit: 'cover' }}
               unoptimized
             />
           ) : (
@@ -575,16 +577,16 @@ function JoinRequestRow({
         </div>
         <span
           style={{
-            fontFamily: "var(--font-body)",
+            fontFamily: 'var(--font-body)',
             fontSize: 14,
             fontWeight: 600,
-            color: "var(--text-primary)",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            color: 'var(--text-primary)',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
           }}
         >
-          {joinRequest.user.name ?? "Anonymous"}
+          {joinRequest.user.name ?? 'Anonymous'}
         </span>
       </Link>
 
@@ -592,12 +594,12 @@ function JoinRequestRow({
       {showScore && joinRequest.compatibilityScore != null && (
         <span
           style={{
-            padding: "3px 10px",
-            borderRadius: "100px",
-            background: "linear-gradient(135deg, var(--fuchsia), var(--violet))",
-            color: "#fff",
+            padding: '3px 10px',
+            borderRadius: '100px',
+            background: 'linear-gradient(135deg, var(--fuchsia), var(--violet))',
+            color: '#fff',
             fontSize: 12,
-            fontFamily: "var(--font-body)",
+            fontFamily: 'var(--font-body)',
             fontWeight: 700,
             flexShrink: 0,
           }}
@@ -607,11 +609,8 @@ function JoinRequestRow({
       )}
 
       {/* Host: approve/decline for pending, status pill for resolved */}
-      {isHost && activityId && joinRequest.status === "pending" ? (
-        <JoinRequestActions
-          activityId={activityId}
-          joinRequestId={joinRequest.id}
-        />
+      {isHost && activityId && joinRequest.status === 'pending' ? (
+        <JoinRequestActions activityId={activityId} joinRequestId={joinRequest.id} />
       ) : showRating && activityId ? (
         <StarRating
           activityId={activityId}
@@ -619,22 +618,24 @@ function JoinRequestRow({
           existingScore={existingRatingScore}
         />
       ) : (
-        showStatus && <span
-          style={{
-            padding: "3px 10px",
-            borderRadius: "100px",
-            background: ss.bg,
-            border: ss.border,
-            color: ss.color,
-            fontSize: 11,
-            fontFamily: "var(--font-body)",
-            fontWeight: 700,
-            textTransform: "capitalize",
-            flexShrink: 0,
-          }}
-        >
-          {joinRequest.status}
-        </span>
+        showStatus && (
+          <span
+            style={{
+              padding: '3px 10px',
+              borderRadius: '100px',
+              background: ss.bg,
+              border: ss.border,
+              color: ss.color,
+              fontSize: 11,
+              fontFamily: 'var(--font-body)',
+              fontWeight: 700,
+              textTransform: 'capitalize',
+              flexShrink: 0,
+            }}
+          >
+            {joinRequest.status}
+          </span>
+        )
       )}
     </div>
   );
@@ -645,28 +646,28 @@ function StatusBadge({
   variant,
 }: {
   text: string;
-  variant: "neutral" | "muted" | "success" | "pending";
+  variant: 'neutral' | 'muted' | 'success' | 'pending';
 }) {
   const styles: Record<string, { bg: string; border: string; color: string }> = {
     neutral: {
-      bg: "var(--violet-bg)",
-      border: "2px solid rgba(139,92,246,0.2)",
-      color: "var(--violet)",
+      bg: 'var(--violet-bg)',
+      border: '2px solid rgba(139,92,246,0.2)',
+      color: 'var(--violet)',
     },
     muted: {
-      bg: "var(--fuchsia-bg)",
-      border: "2px solid var(--border)",
-      color: "var(--text-muted)",
+      bg: 'var(--fuchsia-bg)',
+      border: '2px solid var(--border)',
+      color: 'var(--text-muted)',
     },
     success: {
-      bg: "rgba(45,212,168,0.1)",
-      border: "2px solid rgba(45,212,168,0.3)",
-      color: "#2DD4A8",
+      bg: 'rgba(45,212,168,0.1)',
+      border: '2px solid rgba(45,212,168,0.3)',
+      color: '#2DD4A8',
     },
     pending: {
-      bg: "rgba(255,202,40,0.1)",
-      border: "2px solid rgba(255,202,40,0.3)",
-      color: "#D4A017",
+      bg: 'rgba(255,202,40,0.1)',
+      border: '2px solid rgba(255,202,40,0.3)',
+      color: '#D4A017',
     },
   };
 
@@ -675,15 +676,15 @@ function StatusBadge({
   return (
     <div
       style={{
-        padding: "14px 24px",
-        borderRadius: "100px",
+        padding: '14px 24px',
+        borderRadius: '100px',
         background: s.bg,
         border: s.border,
         color: s.color,
-        fontFamily: "var(--font-body)",
+        fontFamily: 'var(--font-body)',
         fontWeight: 700,
         fontSize: 15,
-        textAlign: "center",
+        textAlign: 'center',
       }}
     >
       {text}

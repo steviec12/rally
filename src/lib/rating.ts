@@ -1,16 +1,16 @@
-import { db } from "@/lib/db";
-import type { RatingResult } from "@/types/rating";
+import { db } from '@/lib/db';
+import type { RatingResult } from '@/types/rating';
 
 export async function createRating(
   raterId: string,
   rateeId: string,
   activityId: string,
-  score: number,
+  score: number
 ): Promise<RatingResult> {
   if (!Number.isInteger(score) || score < 1 || score > 5) {
     return {
       success: false,
-      error: "Score must be an integer between 1 and 5.",
+      error: 'Score must be an integer between 1 and 5.',
       status: 400,
     };
   }
@@ -18,7 +18,7 @@ export async function createRating(
   if (raterId === rateeId) {
     return {
       success: false,
-      error: "You cannot rate yourself.",
+      error: 'You cannot rate yourself.',
       status: 403,
     };
   }
@@ -29,27 +29,27 @@ export async function createRating(
   });
 
   if (!activity) {
-    return { success: false, error: "Activity not found.", status: 404 };
+    return { success: false, error: 'Activity not found.', status: 404 };
   }
 
   if (activity.dateTime > new Date()) {
     return {
       success: false,
-      error: "You can only rate participants after the activity has ended.",
+      error: 'You can only rate participants after the activity has ended.',
       status: 403,
     };
   }
 
-  if (activity.status === "cancelled") {
+  if (activity.status === 'cancelled') {
     return {
       success: false,
-      error: "Cannot rate participants of a cancelled activity.",
+      error: 'Cannot rate participants of a cancelled activity.',
       status: 403,
     };
   }
 
   const approvedJoinRequests = await db.joinRequest.findMany({
-    where: { activityId, status: "approved", userId: { in: [raterId, rateeId] } },
+    where: { activityId, status: 'approved', userId: { in: [raterId, rateeId] } },
     select: { userId: true },
   });
 
@@ -60,7 +60,7 @@ export async function createRating(
   if (!isParticipant(raterId)) {
     return {
       success: false,
-      error: "You must be a participant to rate.",
+      error: 'You must be a participant to rate.',
       status: 403,
     };
   }
@@ -68,7 +68,7 @@ export async function createRating(
   if (!isParticipant(rateeId)) {
     return {
       success: false,
-      error: "Ratee is not a participant of this activity.",
+      error: 'Ratee is not a participant of this activity.',
       status: 404,
     };
   }
@@ -95,7 +95,7 @@ export async function createRating(
     if (isUniqueConstraintError(error)) {
       return {
         success: false,
-        error: "You have already rated this participant for this activity.",
+        error: 'You have already rated this participant for this activity.',
         status: 409,
       };
     }
@@ -104,6 +104,10 @@ export async function createRating(
 }
 
 function isUniqueConstraintError(error: unknown): boolean {
-  return typeof error === "object" && error !== null && "code" in error
-    && (error as { code: unknown }).code === "P2002";
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code: unknown }).code === 'P2002'
+  );
 }

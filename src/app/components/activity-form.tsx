@@ -1,16 +1,13 @@
-"use client";
+'use client';
 
-import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { ACTIVITY_TAGS } from "@/lib/tags";
-import dynamic from "next/dynamic";
+import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { ACTIVITY_TAGS } from '@/lib/tags';
+import dynamic from 'next/dynamic';
 
-const LocationPicker = dynamic(
-  () => import("@/app/components/location-picker"),
-  { ssr: false },
-);
+const LocationPicker = dynamic(() => import('@/app/components/location-picker'), { ssr: false });
 
-type Field = "title" | "dateTime" | "location" | "spots" | "tags" | "description" | null;
+type Field = 'title' | 'dateTime' | 'location' | 'spots' | 'tags' | 'description' | null;
 
 type InitialData = {
   id: string;
@@ -37,26 +34,28 @@ export default function ActivityForm({ initialData, defaultLocation }: ActivityF
   // consistent with how minDateTime is derived and how the form submits values.
   const toLocalInput = (iso: string) => new Date(iso).toISOString().slice(0, 16);
 
-  const [title, setTitle] = useState(initialData?.title ?? "");
+  const [title, setTitle] = useState(initialData?.title ?? '');
   const [tags, setTags] = useState<string[]>(initialData?.tags ?? []);
-  const [tagInput, setTagInput] = useState("");
-  const [dateTime, setDateTime] = useState(initialData?.dateTime ? toLocalInput(initialData.dateTime) : "");
-  const [location, setLocation] = useState(initialData?.location ?? "");
+  const [tagInput, setTagInput] = useState('');
+  const [dateTime, setDateTime] = useState(
+    initialData?.dateTime ? toLocalInput(initialData.dateTime) : ''
+  );
+  const [location, setLocation] = useState(initialData?.location ?? '');
   const [locationLat, setLocationLat] = useState<number | null>(
     initialData?.locationLat && initialData.locationLat !== 0
       ? initialData.locationLat
-      : defaultLocation?.lat ?? null,
+      : (defaultLocation?.lat ?? null)
   );
   const [locationLng, setLocationLng] = useState<number | null>(
     initialData?.locationLng && initialData.locationLng !== 0
       ? initialData.locationLng
-      : defaultLocation?.lng ?? null,
+      : (defaultLocation?.lng ?? null)
   );
   const [maxSpots, setMaxSpots] = useState(initialData?.maxSpots ?? 2);
-  const [description, setDescription] = useState(initialData?.description ?? "");
+  const [description, setDescription] = useState(initialData?.description ?? '');
   const [activeField, setActiveField] = useState<Field>(null);
   const [showTagInput, setShowTagInput] = useState(false);
-  const [showDescription, setShowDescription] = useState(!!(initialData?.description));
+  const [showDescription, setShowDescription] = useState(!!initialData?.description);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
@@ -66,35 +65,35 @@ export default function ActivityForm({ initialData, defaultLocation }: ActivityF
 
   function formatDateTime(dt: string) {
     if (!dt) return null;
-    return new Date(dt).toLocaleString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
+    return new Date(dt).toLocaleString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
     });
   }
 
   function handleTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter" || e.key === ",") {
+    if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
       const tag = tagInput.trim().toLowerCase();
       if (tag && !tags.includes(tag)) setTags((p) => [...p, tag]);
-      setTagInput("");
+      setTagInput('');
       setShowTagInput(false);
     }
-    if (e.key === "Escape") {
-      setTagInput("");
+    if (e.key === 'Escape') {
+      setTagInput('');
       setShowTagInput(false);
     }
   }
 
   function validate() {
     const e: Record<string, string> = {};
-    if (!title.trim()) e.title = "Add a title";
-    if (!dateTime) e.dateTime = "Pick a date & time";
-    else if (new Date(dateTime) <= new Date()) e.dateTime = "Must be in the future";
-    if (!location.trim()) e.location = "Add a location";
+    if (!title.trim()) e.title = 'Add a title';
+    if (!dateTime) e.dateTime = 'Pick a date & time';
+    else if (new Date(dateTime) <= new Date()) e.dateTime = 'Must be in the future';
+    if (!location.trim()) e.location = 'Add a location';
     return e;
   }
 
@@ -107,13 +106,13 @@ export default function ActivityForm({ initialData, defaultLocation }: ActivityF
     setErrors({});
     setSaving(true);
 
-    const url = initialData ? `/api/activities/${initialData.id}` : "/api/activities";
-    const method = initialData ? "PATCH" : "POST";
+    const url = initialData ? `/api/activities/${initialData.id}` : '/api/activities';
+    const method = initialData ? 'PATCH' : 'POST';
 
     try {
       const res = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title,
           tags,
@@ -128,12 +127,12 @@ export default function ActivityForm({ initialData, defaultLocation }: ActivityF
       const data = await res.json();
       if (res.ok) {
         router.refresh();
-        router.push("/dashboard");
+        router.push('/dashboard');
       } else {
-        setErrors({ form: data.error ?? "Something went wrong." });
+        setErrors({ form: data.error ?? 'Something went wrong.' });
       }
     } catch {
-      setErrors({ form: "Something went wrong. Please try again." });
+      setErrors({ form: 'Something went wrong. Please try again.' });
     } finally {
       setSaving(false);
     }
@@ -141,58 +140,64 @@ export default function ActivityForm({ initialData, defaultLocation }: ActivityF
 
   const fieldBorder = (field: string) =>
     errors[field]
-      ? "2px solid #FF4444"
+      ? '2px solid #FF4444'
       : activeField === field
-      ? "2px solid var(--fuchsia)"
-      : "2px solid transparent";
+        ? '2px solid var(--fuchsia)'
+        : '2px solid transparent';
 
   return (
     <div
       style={{
-        width: "100%",
-        background: "var(--surface)",
+        width: '100%',
+        background: 'var(--surface)',
         borderRadius: 20,
-        border: "1px solid var(--border)",
-        boxShadow: "0 8px 40px rgba(255,45,155,0.12)",
-        overflow: "hidden",
+        border: '1px solid var(--border)',
+        boxShadow: '0 8px 40px rgba(255,45,155,0.12)',
+        overflow: 'hidden',
       }}
     >
       {/* Card gradient header strip */}
       <div
         style={{
           height: 6,
-          background: "linear-gradient(135deg, var(--fuchsia), var(--violet))",
+          background: 'linear-gradient(135deg, var(--fuchsia), var(--violet))',
         }}
       />
 
-      <div style={{ padding: "24px 24px 0" }}>
+      <div style={{ padding: '24px 24px 0' }}>
         {/* Tags row */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16, alignItems: "center" }}>
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 6,
+            marginBottom: 16,
+            alignItems: 'center',
+          }}
+        >
           {ACTIVITY_TAGS.map((tag) => (
             <button
               key={tag}
               type="button"
               onClick={() =>
-                setTags((p) =>
-                  p.includes(tag) ? p.filter((t) => t !== tag) : [...p, tag],
-                )
+                setTags((p) => (p.includes(tag) ? p.filter((t) => t !== tag) : [...p, tag]))
               }
               style={{
-                padding: "4px 10px",
-                borderRadius: "100px",
+                padding: '4px 10px',
+                borderRadius: '100px',
                 background: tags.includes(tag)
-                  ? "linear-gradient(135deg, var(--fuchsia), var(--violet))"
-                  : "var(--violet-bg)",
+                  ? 'linear-gradient(135deg, var(--fuchsia), var(--violet))'
+                  : 'var(--violet-bg)',
                 border: tags.includes(tag)
-                  ? "1px solid transparent"
-                  : "1px solid rgba(139,92,246,0.25)",
-                color: tags.includes(tag) ? "#fff" : "var(--violet)",
+                  ? '1px solid transparent'
+                  : '1px solid rgba(139,92,246,0.25)',
+                color: tags.includes(tag) ? '#fff' : 'var(--violet)',
                 fontSize: 12,
-                fontFamily: "var(--font-body)",
+                fontFamily: 'var(--font-body)',
                 fontWeight: 700,
-                cursor: "pointer",
-                userSelect: "none",
-                transition: "all 0.15s ease",
+                cursor: 'pointer',
+                userSelect: 'none',
+                transition: 'all 0.15s ease',
               }}
             >
               {tag}
@@ -207,16 +212,16 @@ export default function ActivityForm({ initialData, defaultLocation }: ActivityF
                 key={tag}
                 onClick={() => setTags((p) => p.filter((t) => t !== tag))}
                 style={{
-                  padding: "4px 10px",
-                  borderRadius: "100px",
-                  background: "linear-gradient(135deg, var(--fuchsia), var(--violet))",
-                  border: "1px solid transparent",
-                  color: "#fff",
+                  padding: '4px 10px',
+                  borderRadius: '100px',
+                  background: 'linear-gradient(135deg, var(--fuchsia), var(--violet))',
+                  border: '1px solid transparent',
+                  color: '#fff',
                   fontSize: 12,
-                  fontFamily: "var(--font-body)",
+                  fontFamily: 'var(--font-body)',
                   fontWeight: 700,
-                  cursor: "pointer",
-                  userSelect: "none",
+                  cursor: 'pointer',
+                  userSelect: 'none',
                 }}
                 title="Click to remove"
               >
@@ -231,17 +236,20 @@ export default function ActivityForm({ initialData, defaultLocation }: ActivityF
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
               onKeyDown={handleTagKeyDown}
-              onBlur={() => { setTagInput(""); setShowTagInput(false); }}
+              onBlur={() => {
+                setTagInput('');
+                setShowTagInput(false);
+              }}
               placeholder="tag name + Enter"
               style={{
                 fontSize: 12,
-                fontFamily: "var(--font-body)",
-                color: "var(--text-primary)",
-                background: "var(--fuchsia-bg)",
-                border: "1.5px solid var(--fuchsia)",
-                borderRadius: "100px",
-                padding: "4px 10px",
-                outline: "none",
+                fontFamily: 'var(--font-body)',
+                color: 'var(--text-primary)',
+                background: 'var(--fuchsia-bg)',
+                border: '1.5px solid var(--fuchsia)',
+                borderRadius: '100px',
+                padding: '4px 10px',
+                outline: 'none',
                 width: 130,
               }}
             />
@@ -250,15 +258,15 @@ export default function ActivityForm({ initialData, defaultLocation }: ActivityF
               type="button"
               onClick={() => setShowTagInput(true)}
               style={{
-                padding: "4px 10px",
-                borderRadius: "100px",
-                background: "transparent",
-                border: "1.5px dashed var(--border)",
-                color: "var(--text-muted)",
+                padding: '4px 10px',
+                borderRadius: '100px',
+                background: 'transparent',
+                border: '1.5px dashed var(--border)',
+                color: 'var(--text-muted)',
                 fontSize: 12,
-                fontFamily: "var(--font-body)",
+                fontFamily: 'var(--font-body)',
                 fontWeight: 600,
-                cursor: "pointer",
+                cursor: 'pointer',
               }}
             >
               + custom
@@ -270,30 +278,30 @@ export default function ActivityForm({ initialData, defaultLocation }: ActivityF
         <div
           style={{
             borderRadius: 10,
-            border: fieldBorder("title"),
-            padding: "4px 8px",
+            border: fieldBorder('title'),
+            padding: '4px 8px',
             marginBottom: 4,
-            transition: "border 0.15s",
+            transition: 'border 0.15s',
           }}
         >
           <textarea
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            onFocus={() => setActiveField("title")}
+            onFocus={() => setActiveField('title')}
             onBlur={() => setActiveField(null)}
             placeholder="What's happening? Give it a great title…"
             rows={2}
             style={{
-              width: "100%",
-              background: "transparent",
-              border: "none",
-              outline: "none",
-              resize: "none",
-              fontFamily: "var(--font-outfit), sans-serif",
+              width: '100%',
+              background: 'transparent',
+              border: 'none',
+              outline: 'none',
+              resize: 'none',
+              fontFamily: 'var(--font-outfit), sans-serif',
               fontWeight: 800,
               fontSize: 20,
-              color: title ? "var(--text-primary)" : "var(--text-muted)",
-              letterSpacing: "-0.5px",
+              color: title ? 'var(--text-primary)' : 'var(--text-muted)',
+              letterSpacing: '-0.5px',
               lineHeight: 1.3,
             }}
           />
@@ -302,57 +310,60 @@ export default function ActivityForm({ initialData, defaultLocation }: ActivityF
       </div>
 
       {/* Divider */}
-      <div style={{ height: 1, background: "var(--border)", margin: "12px 0" }} />
+      <div style={{ height: 1, background: 'var(--border)', margin: '12px 0' }} />
 
-      <div style={{ padding: "0 24px", display: "flex", flexDirection: "column", gap: 4 }}>
+      <div style={{ padding: '0 24px', display: 'flex', flexDirection: 'column', gap: 4 }}>
         {/* Date & time */}
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             gap: 10,
-            padding: "10px 8px",
+            padding: '10px 8px',
             borderRadius: 10,
-            border: fieldBorder("dateTime"),
-            cursor: activeField === "dateTime" ? "default" : "pointer",
-            transition: "border 0.15s",
+            border: fieldBorder('dateTime'),
+            cursor: activeField === 'dateTime' ? 'default' : 'pointer',
+            transition: 'border 0.15s',
           }}
           onClick={() => {
-            setActiveField("dateTime");
+            setActiveField('dateTime');
             setTimeout(() => dateInputRef.current?.focus(), 0);
           }}
         >
           <span style={{ fontSize: 18 }}>📅</span>
-          {activeField === "dateTime" ? (
+          {activeField === 'dateTime' ? (
             <input
               ref={dateInputRef}
               type="datetime-local"
               value={dateTime}
               min={minDateTime}
-              onChange={(e) => { setDateTime(e.target.value); setErrors((p) => ({ ...p, dateTime: "" })); }}
+              onChange={(e) => {
+                setDateTime(e.target.value);
+                setErrors((p) => ({ ...p, dateTime: '' }));
+              }}
               onBlur={() => setActiveField(null)}
               style={{
                 flex: 1,
-                border: "none",
-                outline: "none",
-                background: "transparent",
-                fontFamily: "var(--font-body)",
+                border: 'none',
+                outline: 'none',
+                background: 'transparent',
+                fontFamily: 'var(--font-body)',
                 fontSize: 15,
                 fontWeight: 600,
-                color: "var(--text-primary)",
+                color: 'var(--text-primary)',
               }}
             />
           ) : (
             <span
               style={{
-                fontFamily: "var(--font-body)",
+                fontFamily: 'var(--font-body)',
                 fontSize: 15,
                 fontWeight: 600,
-                color: dateTime ? "var(--text-primary)" : "var(--text-muted)",
+                color: dateTime ? 'var(--text-primary)' : 'var(--text-muted)',
                 flex: 1,
               }}
             >
-              {dateTime ? formatDateTime(dateTime) : "Pick a date & time"}
+              {dateTime ? formatDateTime(dateTime) : 'Pick a date & time'}
             </span>
           )}
         </div>
@@ -361,13 +372,13 @@ export default function ActivityForm({ initialData, defaultLocation }: ActivityF
         {/* Location */}
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             gap: 10,
-            padding: "2px 8px",
+            padding: '2px 8px',
             borderRadius: 10,
-            border: fieldBorder("location"),
-            transition: "border 0.15s",
+            border: fieldBorder('location'),
+            transition: 'border 0.15s',
           }}
         >
           <span style={{ fontSize: 18 }}>📍</span>
@@ -375,26 +386,26 @@ export default function ActivityForm({ initialData, defaultLocation }: ActivityF
             type="text"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            onFocus={() => setActiveField("location")}
+            onFocus={() => setActiveField('location')}
             onBlur={() => setActiveField(null)}
             placeholder="Name this spot (e.g. Venice Beach Courts)"
             style={{
               flex: 1,
-              background: "transparent",
-              border: "none",
-              outline: "none",
-              fontFamily: "var(--font-body)",
+              background: 'transparent',
+              border: 'none',
+              outline: 'none',
+              fontFamily: 'var(--font-body)',
               fontSize: 15,
               fontWeight: 600,
-              color: location ? "var(--text-primary)" : "var(--text-muted)",
-              padding: "8px 0",
+              color: location ? 'var(--text-primary)' : 'var(--text-muted)',
+              padding: '8px 0',
             }}
           />
         </div>
         {errors.location && <p style={errorStyle}>{errors.location}</p>}
 
         {/* Map picker */}
-        <div style={{ margin: "8px 0" }}>
+        <div style={{ margin: '8px 0' }}>
           <LocationPicker
             lat={locationLat}
             lng={locationLng}
@@ -406,9 +417,9 @@ export default function ActivityForm({ initialData, defaultLocation }: ActivityF
           {locationLat != null && locationLng != null && (
             <p
               style={{
-                fontFamily: "var(--font-body)",
+                fontFamily: 'var(--font-body)',
                 fontSize: 11,
-                color: "var(--text-muted)",
+                color: 'var(--text-muted)',
                 marginTop: 4,
                 paddingLeft: 4,
               }}
@@ -421,35 +432,43 @@ export default function ActivityForm({ initialData, defaultLocation }: ActivityF
         {/* Spots stepper */}
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             gap: 10,
-            padding: "8px 8px",
+            padding: '8px 8px',
             borderRadius: 10,
-            border: "2px solid transparent",
+            border: '2px solid transparent',
           }}
         >
           <span style={{ fontSize: 18 }}>👥</span>
-          <span style={{ fontFamily: "var(--font-body)", fontSize: 15, fontWeight: 600, color: "var(--text-secondary)", flex: 1 }}>
+          <span
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 15,
+              fontWeight: 600,
+              color: 'var(--text-secondary)',
+              flex: 1,
+            }}
+          >
             Spots available
           </span>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button
               type="button"
               onClick={() => setMaxSpots((p) => Math.max(1, p - 1))}
               style={{
                 width: 32,
                 height: 32,
-                borderRadius: "50%",
-                border: "2px solid var(--border)",
-                background: "#fff",
-                color: "var(--text-primary)",
+                borderRadius: '50%',
+                border: '2px solid var(--border)',
+                background: '#fff',
+                color: 'var(--text-primary)',
                 fontSize: 18,
                 fontWeight: 700,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 lineHeight: 1,
               }}
             >
@@ -457,12 +476,12 @@ export default function ActivityForm({ initialData, defaultLocation }: ActivityF
             </button>
             <span
               style={{
-                fontFamily: "var(--font-outfit), sans-serif",
+                fontFamily: 'var(--font-outfit), sans-serif',
                 fontWeight: 800,
                 fontSize: 20,
-                color: "var(--fuchsia)",
+                color: 'var(--fuchsia)',
                 minWidth: 28,
-                textAlign: "center",
+                textAlign: 'center',
               }}
             >
               {maxSpots}
@@ -473,16 +492,16 @@ export default function ActivityForm({ initialData, defaultLocation }: ActivityF
               style={{
                 width: 32,
                 height: 32,
-                borderRadius: "50%",
-                border: "2px solid var(--border)",
-                background: "#fff",
-                color: "var(--text-primary)",
+                borderRadius: '50%',
+                border: '2px solid var(--border)',
+                background: '#fff',
+                color: 'var(--text-primary)',
                 fontSize: 18,
                 fontWeight: 700,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 lineHeight: 1,
               }}
             >
@@ -495,13 +514,16 @@ export default function ActivityForm({ initialData, defaultLocation }: ActivityF
         {showDescription ? (
           <div
             style={{
-              display: "flex",
-              alignItems: "flex-start",
+              display: 'flex',
+              alignItems: 'flex-start',
               gap: 10,
-              padding: "2px 8px",
+              padding: '2px 8px',
               borderRadius: 10,
-              border: activeField === "description" ? "2px solid var(--fuchsia)" : "2px solid transparent",
-              transition: "border 0.15s",
+              border:
+                activeField === 'description'
+                  ? '2px solid var(--fuchsia)'
+                  : '2px solid transparent',
+              transition: 'border 0.15s',
             }}
           >
             <span style={{ fontSize: 18, marginTop: 8 }}>💬</span>
@@ -509,20 +531,20 @@ export default function ActivityForm({ initialData, defaultLocation }: ActivityF
               autoFocus
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              onFocus={() => setActiveField("description")}
+              onFocus={() => setActiveField('description')}
               onBlur={() => setActiveField(null)}
               placeholder="Any extra details — skill level, what to bring, etc."
               rows={3}
               style={{
                 flex: 1,
-                background: "transparent",
-                border: "none",
-                outline: "none",
-                resize: "none",
-                fontFamily: "var(--font-body)",
+                background: 'transparent',
+                border: 'none',
+                outline: 'none',
+                resize: 'none',
+                fontFamily: 'var(--font-body)',
                 fontSize: 14,
-                color: "var(--text-secondary)",
-                padding: "8px 0",
+                color: 'var(--text-secondary)',
+                padding: '8px 0',
                 lineHeight: 1.5,
               }}
             />
@@ -532,19 +554,21 @@ export default function ActivityForm({ initialData, defaultLocation }: ActivityF
             type="button"
             onClick={() => setShowDescription(true)}
             style={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 10,
-              padding: "8px 8px",
+              padding: '8px 8px',
               borderRadius: 10,
-              border: "none",
-              background: "none",
-              cursor: "pointer",
-              textAlign: "left",
+              border: 'none',
+              background: 'none',
+              cursor: 'pointer',
+              textAlign: 'left',
             }}
           >
             <span style={{ fontSize: 18 }}>💬</span>
-            <span style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "var(--text-muted)" }}>
+            <span
+              style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-muted)' }}
+            >
               Add a description…
             </span>
           </button>
@@ -552,17 +576,19 @@ export default function ActivityForm({ initialData, defaultLocation }: ActivityF
       </div>
 
       {/* Footer */}
-      <div style={{ padding: "16px 24px 24px", display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ padding: '16px 24px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         {errors.form && (
-          <div style={{
-            padding: "10px 14px",
-            borderRadius: 10,
-            background: "#FFF0F0",
-            border: "1px solid #FFCCCC",
-            color: "#CC0000",
-            fontSize: 13,
-            fontFamily: "var(--font-body)",
-          }}>
+          <div
+            style={{
+              padding: '10px 14px',
+              borderRadius: 10,
+              background: '#FFF0F0',
+              border: '1px solid #FFCCCC',
+              color: '#CC0000',
+              fontSize: 13,
+              fontFamily: 'var(--font-body)',
+            }}
+          >
             {errors.form}
           </div>
         )}
@@ -571,21 +597,29 @@ export default function ActivityForm({ initialData, defaultLocation }: ActivityF
           onClick={handleSubmit}
           disabled={saving}
           style={{
-            padding: "14px",
-            borderRadius: "100px",
-            border: "none",
-            background: saving ? "var(--text-muted)" : "linear-gradient(135deg, var(--fuchsia), var(--violet))",
-            color: "#fff",
-            fontFamily: "var(--font-outfit), sans-serif",
+            padding: '14px',
+            borderRadius: '100px',
+            border: 'none',
+            background: saving
+              ? 'var(--text-muted)'
+              : 'linear-gradient(135deg, var(--fuchsia), var(--violet))',
+            color: '#fff',
+            fontFamily: 'var(--font-outfit), sans-serif',
             fontWeight: 800,
             fontSize: 16,
-            cursor: saving ? "not-allowed" : "pointer",
-            letterSpacing: "-0.3px",
-            boxShadow: saving ? "none" : "0 4px 20px rgba(255,45,155,0.35)",
-            transition: "all 0.15s",
+            cursor: saving ? 'not-allowed' : 'pointer',
+            letterSpacing: '-0.3px',
+            boxShadow: saving ? 'none' : '0 4px 20px rgba(255,45,155,0.35)',
+            transition: 'all 0.15s',
           }}
         >
-          {saving ? (isEditMode ? "Saving…" : "Posting…") : (isEditMode ? "Save changes" : "Post it 🎉")}
+          {saving
+            ? isEditMode
+              ? 'Saving…'
+              : 'Posting…'
+            : isEditMode
+              ? 'Save changes'
+              : 'Post it 🎉'}
         </button>
       </div>
     </div>
@@ -594,8 +628,8 @@ export default function ActivityForm({ initialData, defaultLocation }: ActivityF
 
 const errorStyle: React.CSSProperties = {
   fontSize: 12,
-  color: "#CC0000",
-  fontFamily: "var(--font-body)",
+  color: '#CC0000',
+  fontFamily: 'var(--font-body)',
   paddingLeft: 36,
   marginTop: -2,
 };
