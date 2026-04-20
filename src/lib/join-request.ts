@@ -142,6 +142,12 @@ export async function updateJoinRequestStatus(
     newStatus === 'approved' &&
     joinRequest.activity._count.joinRequests + 1 >= joinRequest.activity.maxSpots;
 
+  const notificationData = {
+    userId: joinRequest.userId,
+    type: newStatus === 'approved' ? 'request_approved' : 'request_declined',
+    activityId: joinRequest.activityId,
+  };
+
   if (shouldMarkFull) {
     await db.$transaction([
       db.joinRequest.update({
@@ -152,21 +158,17 @@ export async function updateJoinRequestStatus(
         where: { id: joinRequest.activity.id },
         data: { status: 'full' },
       }),
+      db.notification.create({ data: notificationData }),
     ]);
   } else {
-    await db.joinRequest.update({
-      where: { id: joinRequestId },
-      data: { status: newStatus },
-    });
+    await db.$transaction([
+      db.joinRequest.update({
+        where: { id: joinRequestId },
+        data: { status: newStatus },
+      }),
+      db.notification.create({ data: notificationData }),
+    ]);
   }
-
-  await db.notification.create({
-    data: {
-      userId: joinRequest.userId,
-      type: newStatus === 'approved' ? 'request_approved' : 'request_declined',
-      activityId: joinRequest.activityId,
-    },
-  });
 
   return { success: true };
 }

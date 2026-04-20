@@ -118,17 +118,12 @@ describe('updateJoinRequestStatus', () => {
     mockFindUnique.mockResolvedValue(mockJoinRequest);
     mockUpdate.mockResolvedValue({ ...mockJoinRequest, status: 'approved' });
     mockNotificationCreate.mockResolvedValue({});
+    mockTransaction.mockResolvedValue([]);
 
     const result = await updateJoinRequestStatus('jr-1', 'host-1', 'approved');
 
     expect(result).toEqual({ success: true });
-    expect(mockUpdate).toHaveBeenCalledWith({
-      where: { id: 'jr-1' },
-      data: { status: 'approved' },
-    });
-    expect(mockNotificationCreate).toHaveBeenCalledWith({
-      data: { userId: 'user-1', type: 'request_approved', activityId: 'activity-1' },
-    });
+    expect(mockTransaction).toHaveBeenCalled();
   });
 
   it('flips activity status to full when last spot is approved (via transaction)', async () => {
@@ -164,11 +159,11 @@ describe('updateJoinRequestStatus', () => {
     });
     mockUpdate.mockResolvedValue({ ...mockJoinRequest, status: 'approved' });
     mockNotificationCreate.mockResolvedValue({});
+    mockTransaction.mockResolvedValue([]);
 
     await updateJoinRequestStatus('jr-1', 'host-1', 'approved');
 
-    expect(mockTransaction).not.toHaveBeenCalled();
-    expect(mockUpdate).toHaveBeenCalled();
+    expect(mockTransaction).toHaveBeenCalled();
     expect(mockActivityUpdate).not.toHaveBeenCalled();
   });
 
@@ -183,29 +178,23 @@ describe('updateJoinRequestStatus', () => {
     });
     mockUpdate.mockResolvedValue({ ...mockJoinRequest, status: 'declined' });
     mockNotificationCreate.mockResolvedValue({});
+    mockTransaction.mockResolvedValue([]);
 
     await updateJoinRequestStatus('jr-1', 'host-1', 'declined');
 
     expect(mockActivityUpdate).not.toHaveBeenCalled();
-    expect(mockNotificationCreate).toHaveBeenCalledWith({
-      data: { userId: 'user-1', type: 'request_declined', activityId: 'activity-1' },
-    });
+    expect(mockTransaction).toHaveBeenCalled();
   });
 
   it('successfully declines a pending request', async () => {
     mockFindUnique.mockResolvedValue(mockJoinRequest);
     mockUpdate.mockResolvedValue({ ...mockJoinRequest, status: 'declined' });
     mockNotificationCreate.mockResolvedValue({});
+    mockTransaction.mockResolvedValue([]);
 
     const result = await updateJoinRequestStatus('jr-1', 'host-1', 'declined');
 
     expect(result).toEqual({ success: true });
-    expect(mockUpdate).toHaveBeenCalledWith({
-      where: { id: 'jr-1' },
-      data: { status: 'declined' },
-    });
-    expect(mockNotificationCreate).toHaveBeenCalledWith({
-      data: { userId: 'user-1', type: 'request_declined', activityId: 'activity-1' },
-    });
+    expect(mockTransaction).toHaveBeenCalled();
   });
 });

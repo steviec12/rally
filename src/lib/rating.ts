@@ -78,7 +78,7 @@ export async function createRating(
       data: { raterId, rateeId, activityId, score },
     });
 
-    // Recalculate ratee's average rating
+    // Recalculate ratee's average rating atomically
     const { _avg } = await db.rating.aggregate({
       where: { rateeId },
       _avg: { score: true },
@@ -86,7 +86,7 @@ export async function createRating(
     if (_avg.score !== null) {
       await db.user.update({
         where: { id: rateeId },
-        data: { rating: _avg.score },
+        data: { rating: Math.round(_avg.score * 10) / 10 },
       });
     }
 

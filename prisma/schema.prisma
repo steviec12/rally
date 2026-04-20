@@ -91,6 +91,9 @@ model Activity {
   joinRequests  JoinRequest[]
   ratings       Rating[]
   notifications Notification[]
+
+  @@index([hostId])
+  @@index([status, dateTime])
 }
 
 enum ActivityStatus {
@@ -112,6 +115,8 @@ model JoinRequest {
   user     User     @relation("RequesterJoinRequests", fields: [userId], references: [id])
 
   @@unique([activityId, userId])
+  @@index([userId])
+  @@index([activityId, status])
 }
 
 enum JoinRequestStatus {
@@ -133,6 +138,7 @@ model Rating {
   activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
 
   @@unique([raterId, rateeId, activityId])
+  @@index([rateeId])
 }
 
 model Notification {
@@ -145,4 +151,6 @@ model Notification {
 
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
 }

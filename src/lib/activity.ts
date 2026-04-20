@@ -150,10 +150,16 @@ export async function cancelActivity(
     };
   }
 
-  await db.activity.update({
-    where: { id: activityId },
-    data: { status: 'cancelled', cancellationReason: reason?.trim() || null },
-  });
+  await db.$transaction([
+    db.activity.update({
+      where: { id: activityId },
+      data: { status: 'cancelled', cancellationReason: reason?.trim() || null },
+    }),
+    db.joinRequest.updateMany({
+      where: { activityId, status: 'pending' },
+      data: { status: 'declined' },
+    }),
+  ]);
   return { success: true as const };
 }
 
@@ -162,6 +168,9 @@ export function validateActivityInput(body: unknown): { error: string } | null {
 
   if (!b.title || typeof b.title !== 'string' || b.title.trim().length < 1) {
     return { error: 'Title is required.' };
+  }
+  if (typeof b.title === 'string' && b.title.length > 200) {
+    return { error: 'Title must be 200 characters or fewer.' };
   }
   if (!b.dateTime || typeof b.dateTime !== 'string' || isNaN(Date.parse(b.dateTime))) {
     return { error: 'A valid date and time is required.' };
@@ -172,6 +181,9 @@ export function validateActivityInput(body: unknown): { error: string } | null {
   if (!b.location || typeof b.location !== 'string' || b.location.trim().length < 1) {
     return { error: 'Location is required.' };
   }
+  if (typeof b.location === 'string' && b.location.length > 200) {
+    return { error: 'Location must be 200 characters or fewer.' };
+  }
   if (
     b.maxSpots === undefined ||
     typeof b.maxSpots !== 'number' ||
@@ -179,6 +191,9 @@ export function validateActivityInput(body: unknown): { error: string } | null {
     !Number.isInteger(b.maxSpots)
   ) {
     return { error: 'Max spots must be at least 1.' };
+  }
+  if (typeof b.maxSpots === 'number' && b.maxSpots > 100) {
+    return { error: 'Max spots cannot exceed 100.' };
   }
 
   return null;
