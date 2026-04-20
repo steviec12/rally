@@ -40,21 +40,21 @@ describe('GET /api/profile', () => {
   it('returns 401 when not authenticated', async () => {
     mockAuth(auth, null);
     const req = new Request('http://localhost/api/profile');
-    const res = await GET(req);
+    const res = await GET();
     expect(res.status).toBe(401);
   });
 
   it('returns 404 when user profile does not exist', async () => {
     mockDb.user.findUnique.mockResolvedValue(null);
     const req = new Request('http://localhost/api/profile');
-    const res = await GET(req);
+    const res = await GET();
     expect(res.status).toBe(404);
   });
 
   it('returns 200 with profile data for authenticated user', async () => {
     mockDb.user.findUnique.mockResolvedValue(MOCK_USER);
     const req = new Request('http://localhost/api/profile');
-    const res = await GET(req);
+    const res = await GET();
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.id).toBe('user-1');
