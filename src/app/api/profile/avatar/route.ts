@@ -10,11 +10,13 @@ export async function POST(req: Request) {
   }
 
   const formData = await req.formData();
-  const file = formData.get('file') as File | null;
+  const fileEntry = formData.get('file');
 
-  if (!file) {
+  if (!fileEntry || typeof fileEntry === 'string') {
     return NextResponse.json({ error: 'No file provided.' }, { status: 400 });
   }
+
+  const file = fileEntry as File;
 
   if (!file.type.startsWith('image/')) {
     return NextResponse.json({ error: 'File must be an image.' }, { status: 400 });
