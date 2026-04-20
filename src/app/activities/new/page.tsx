@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { db } from '@/lib/db';
 import ActivityForm from '@/app/components/activity-form';
+import BackButton from '@/app/components/back-button';
 
 export default async function NewActivityPage() {
   const session = await auth();
@@ -23,6 +24,7 @@ export default async function NewActivityPage() {
       style={{ background: 'var(--bg)' }}
     >
       <div style={{ width: '100%', maxWidth: 480 }}>
+        <BackButton />
         <h1
           style={{
             fontFamily: 'var(--font-outfit), sans-serif',
