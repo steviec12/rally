@@ -1,6 +1,6 @@
 ---
 name: pr-validator
-description: "Use before opening every PR. Runs all automated checks and generates a manual testing checklist. Must pass before /create-pr skill is invoked."
+description: 'Use before opening every PR. Runs all automated checks and generates a manual testing checklist. Must pass before /create-pr skill is invoked.'
 tools: Bash, Read
 ---
 
@@ -69,6 +69,7 @@ Format the checklist as numbered steps a human can follow in the browser or term
 ## Step 8 — PR Body Reminders
 
 Remind the author to include in the PR body:
+
 - `Closes #X` linking to the correct GitHub issue number
 - AI Disclosure block (AI-generated code %, tool used, human review applied)
 - C.L.E.A.R. review checklist (Context, Logic, Edge cases, Architecture, Risk)

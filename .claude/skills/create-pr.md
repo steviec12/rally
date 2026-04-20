@@ -1,6 +1,6 @@
 ---
 name: create-pr
-description: "Use when ready to open a pull request. Runs all automated checks, generates a standardized PR title/body, and opens the PR to main via GitHub MCP."
+description: 'Use when ready to open a pull request. Runs all automated checks, generates a standardized PR title/body, and opens the PR to main via GitHub MCP.'
 user_invocable: true
 ---
 
@@ -26,6 +26,7 @@ If it surfaces any blocking issues, **stop here** and report them to the user. D
 ## Step 3 — Run Automated Checks
 
 Run all three checks in sequence:
+
 ```bash
 npm run lint
 npx tsc --noEmit
@@ -37,6 +38,7 @@ If **any check fails**, stop immediately and report the exact error output. Do n
 ## Step 4 — Generate PR Title
 
 Produce a title following conventional commit format:
+
 - Pattern: `type(scope): short description` (under 70 characters)
 - Derive type and scope from the branch name and commit history
 - Example: `feat(notifications): notify requester on join request decision`
@@ -76,6 +78,7 @@ Fill in every placeholder with real content derived from the diff and commit his
 ## Step 6 — Open the PR
 
 Use the GitHub MCP tool to open the PR:
+
 - Tool: `mcp__github__create_pull_request`
 - Base branch: `main`
 - Head branch: current branch
@@ -85,6 +88,7 @@ Use the GitHub MCP tool to open the PR:
 Return the PR URL to the user when done.
 
 ## Rules
+
 - Never open a PR if any automated check fails
 - Never open a PR without running the pr-validator agent first
 - Always include `Closes #X` in the PR body — confirm the issue number before opening

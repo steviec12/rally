@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef } from 'react';
 
 interface GeolocationState {
   lat: number | null;
@@ -23,7 +23,7 @@ export function useGeolocation() {
 
   const requestLocation = useCallback((onSuccess?: OnSuccess) => {
     if (!navigator.geolocation) {
-      setState((s) => ({ ...s, error: "Geolocation not supported" }));
+      setState((s) => ({ ...s, error: 'Geolocation not supported' }));
       return;
     }
 
@@ -41,7 +41,7 @@ export function useGeolocation() {
       (err) => {
         setState((s) => ({ ...s, error: err.message, loading: false }));
         onSuccessRef.current = null;
-      },
+      }
     );
   }, []);
 

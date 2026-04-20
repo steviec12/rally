@@ -17,7 +17,11 @@ vi.mock('@/lib/join-request', () => ({
 
 import { auth } from '@/auth';
 import { db } from '@/lib/db';
-import { getJoinRequestsForHost, createJoinRequest, updateJoinRequestStatus } from '@/lib/join-request';
+import {
+  getJoinRequestsForHost,
+  createJoinRequest,
+  updateJoinRequestStatus,
+} from '@/lib/join-request';
 import { GET, POST, PATCH } from './route';
 import { mockAuth } from '@/lib/__tests__/setup';
 import type { MockPrismaClient } from '@/lib/__tests__/setup';

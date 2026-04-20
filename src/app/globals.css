@@ -1,41 +1,41 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* ===== Rally brand tokens ===== */
 :root {
   /* Primary — fuchsia */
-  --fuchsia: #FF2D9B;
-  --fuchsia-dark: #E01B85;
-  --fuchsia-light: #FF5CB5;
-  --fuchsia-bg: #FFF0F8;
-  --fuchsia-bg-deep: #FFE0F0;
+  --fuchsia: #ff2d9b;
+  --fuchsia-dark: #e01b85;
+  --fuchsia-light: #ff5cb5;
+  --fuchsia-bg: #fff0f8;
+  --fuchsia-bg-deep: #ffe0f0;
   --fuchsia-glow: rgba(255, 45, 155, 0.12);
 
   /* Secondary — violet */
-  --violet: #8B5CF6;
-  --violet-light: #A78BFA;
-  --violet-bg: #F3EEFF;
+  --violet: #8b5cf6;
+  --violet-light: #a78bfa;
+  --violet-bg: #f3eeff;
 
   /* Accents */
-  --sunny: #FFCA28;
-  --sunny-bg: #FFFAEA;
-  --sky: #38BDF8;
-  --sky-bg: #EAF6FF;
-  --mint: #2DD4A8;
-  --mint-bg: #E6FBF4;
-  --peach: #FF8C69;
-  --peach-bg: #FFF1EC;
+  --sunny: #ffca28;
+  --sunny-bg: #fffaea;
+  --sky: #38bdf8;
+  --sky-bg: #eaf6ff;
+  --mint: #2dd4a8;
+  --mint-bg: #e6fbf4;
+  --peach: #ff8c69;
+  --peach-bg: #fff1ec;
 
   /* Background / surface */
-  --bg: #FFFAFE;
-  --bg-warm: #FFF5FA;
-  --surface: #FFFFFF;
-  --border: #F3E4EE;
-  --border-light: #F9F0F6;
+  --bg: #fffafe;
+  --bg-warm: #fff5fa;
+  --surface: #ffffff;
+  --border: #f3e4ee;
+  --border-light: #f9f0f6;
 
   /* Text */
-  --text-primary: #1E0A1B;
-  --text-secondary: #5C4558;
-  --text-muted: #A693A2;
+  --text-primary: #1e0a1b;
+  --text-secondary: #5c4558;
+  --text-muted: #a693a2;
 
   /* Shadows */
   --shadow-sm: 0 1px 4px rgba(255, 45, 155, 0.04);

@@ -91,7 +91,12 @@ describe('validateActivityInput', () => {
 
   it('returns null for fully valid input', () => {
     expect(
-      validateActivityInput({ title: 'Morning Run', dateTime: futureDate, location: 'Venice Beach', maxSpots: 2 })
+      validateActivityInput({
+        title: 'Morning Run',
+        dateTime: futureDate,
+        location: 'Venice Beach',
+        maxSpots: 2,
+      })
     ).toBeNull();
   });
 
@@ -109,7 +114,12 @@ describe('validateActivityInput', () => {
 
   it('returns error when dateTime is not a valid date string', () => {
     expect(
-      validateActivityInput({ title: 'Test', dateTime: 'not-a-date', location: 'Test', maxSpots: 2 })
+      validateActivityInput({
+        title: 'Test',
+        dateTime: 'not-a-date',
+        location: 'Test',
+        maxSpots: 2,
+      })
     ).toEqual({ error: 'A valid date and time is required.' });
   });
 
@@ -147,7 +157,12 @@ describe('validateActivityInput', () => {
 
   it('returns error when maxSpots is a float (non-integer)', () => {
     expect(
-      validateActivityInput({ title: 'Test', dateTime: futureDate, location: 'Test', maxSpots: 1.5 })
+      validateActivityInput({
+        title: 'Test',
+        dateTime: futureDate,
+        location: 'Test',
+        maxSpots: 1.5,
+      })
     ).toEqual({ error: 'Max spots must be at least 1.' });
   });
 

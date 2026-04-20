@@ -13,8 +13,10 @@ function calcTagScore(interests: string[], tags: string[]): number {
 }
 
 function calcProximityScore(
-  userLat: number, userLng: number,
-  actLat: number, actLng: number,
+  userLat: number,
+  userLng: number,
+  actLat: number,
+  actLng: number
 ): number {
   const dist = haversineKm(userLat, userLng, actLat, actLng);
   return Math.max(0, (1 - dist / MAX_DISTANCE_KM) * 30);
@@ -32,7 +34,7 @@ function calcActivityCountScore(count: number): number {
 export function calculateCompatibilityScore(
   requester: ScoringUser,
   activity: ScoringActivity,
-  now: Date = new Date(),
+  now: Date = new Date()
 ): ScoringResult {
   if (requester.id === activity.hostId) {
     return { outcome: 'rejected', reason: 'self_join' };
@@ -48,8 +50,10 @@ export function calculateCompatibilityScore(
 
   const tagScore = calcTagScore(requester.interests, activity.tags);
   const proximityScore = calcProximityScore(
-    requester.locationLat, requester.locationLng,
-    activity.locationLat, activity.locationLng,
+    requester.locationLat,
+    requester.locationLng,
+    activity.locationLat,
+    activity.locationLng
   );
   const ratingScore = calcRatingScore(requester.rating);
   const activityCountScore = calcActivityCountScore(requester.activityCount);

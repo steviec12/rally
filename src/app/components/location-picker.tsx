@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useRef } from "react";
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import { useEffect, useState, useRef } from 'react';
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 const markerIcon = new L.Icon({
-  iconUrl: "/marker-icon.png",
-  iconRetinaUrl: "/marker-icon-2x.png",
-  shadowUrl: "/marker-shadow.png",
+  iconUrl: '/marker-icon.png',
+  iconRetinaUrl: '/marker-icon-2x.png',
+  shadowUrl: '/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
 });
@@ -55,11 +55,7 @@ function DraggableMarker({
   );
 }
 
-export default function LocationPicker({
-  lat,
-  lng,
-  onLocationChange,
-}: LocationPickerProps) {
+export default function LocationPicker({ lat, lng, onLocationChange }: LocationPickerProps) {
   const [locating, setLocating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const hasLocation = lat != null && lng != null;
@@ -73,7 +69,7 @@ export default function LocationPicker({
 
   function requestLocation() {
     if (!navigator.geolocation) {
-      setError("Geolocation not supported by your browser");
+      setError('Geolocation not supported by your browser');
       return;
     }
     setLocating(true);
@@ -86,7 +82,7 @@ export default function LocationPicker({
       (err) => {
         setError(err.message);
         setLocating(false);
-      },
+      }
     );
   }
 
@@ -96,13 +92,13 @@ export default function LocationPicker({
         style={{
           height: 200,
           borderRadius: 12,
-          background: "var(--fuchsia-bg)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontFamily: "var(--font-body)",
+          background: 'var(--fuchsia-bg)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: 'var(--font-body)',
           fontSize: 14,
-          color: "var(--text-muted)",
+          color: 'var(--text-muted)',
         }}
       >
         Getting your location…
@@ -116,22 +112,22 @@ export default function LocationPicker({
         style={{
           height: 200,
           borderRadius: 12,
-          background: "var(--fuchsia-bg)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
+          background: 'var(--fuchsia-bg)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
           gap: 10,
         }}
       >
         {error && (
           <p
             style={{
-              fontFamily: "var(--font-body)",
+              fontFamily: 'var(--font-body)',
               fontSize: 13,
-              color: "var(--fuchsia)",
-              textAlign: "center",
-              padding: "0 16px",
+              color: 'var(--fuchsia)',
+              textAlign: 'center',
+              padding: '0 16px',
             }}
           >
             {error}
@@ -141,24 +137,24 @@ export default function LocationPicker({
           type="button"
           onClick={requestLocation}
           style={{
-            padding: "8px 16px",
-            borderRadius: "100px",
-            background: "linear-gradient(135deg, var(--fuchsia), var(--violet))",
-            color: "#fff",
-            fontFamily: "var(--font-body)",
+            padding: '8px 16px',
+            borderRadius: '100px',
+            background: 'linear-gradient(135deg, var(--fuchsia), var(--violet))',
+            color: '#fff',
+            fontFamily: 'var(--font-body)',
             fontWeight: 700,
             fontSize: 13,
-            border: "none",
-            cursor: "pointer",
+            border: 'none',
+            cursor: 'pointer',
           }}
         >
           Allow location access
         </button>
         <p
           style={{
-            fontFamily: "var(--font-body)",
+            fontFamily: 'var(--font-body)',
             fontSize: 11,
-            color: "var(--text-muted)",
+            color: 'var(--text-muted)',
           }}
         >
           Tap the map to set a pin, or drag to adjust
@@ -168,19 +164,15 @@ export default function LocationPicker({
   }
 
   return (
-    <div style={{ borderRadius: 12, overflow: "hidden", height: 200 }}>
+    <div style={{ borderRadius: 12, overflow: 'hidden', height: 200 }}>
       <MapContainer
         center={[lat!, lng!]}
         zoom={14}
-        style={{ height: "100%", width: "100%" }}
+        style={{ height: '100%', width: '100%' }}
         attributionControl={false}
       >
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        <DraggableMarker
-          lat={lat!}
-          lng={lng!}
-          onLocationChange={onLocationChange}
-        />
+        <DraggableMarker lat={lat!} lng={lng!} onLocationChange={onLocationChange} />
       </MapContainer>
     </div>
   );

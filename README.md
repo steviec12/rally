@@ -1,36 +1,152 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rally
 
-## Getting Started
+A location-based, activity-first social platform where users post real-world activities and others request to join. Unlike Meetup or Bumble BFF, Rally focuses on spontaneous, casual meetups driven by what people want to do — not who they already know.
 
-First, run the development server:
+**Live:** [rally-app.vercel.app](https://rally-app.vercel.app) (or your Vercel URL)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## The Problem
+
+You want to play pickup basketball Saturday morning but your usual group can't make it. You text the group chat — no response. Post an Instagram story — maybe one person replies, too late. The plan dies.
+
+Rally fixes this by making the activity the atomic unit. Post what you want to do, let compatible strangers discover it, and decide who joins based on a compatibility score.
+
+## Features
+
+- **Auth** — Google OAuth + email/password via NextAuth v5
+- **Activity Cards** — Create, edit, cancel activities with tags, location, date, and max spots
+- **Smart Feed** — Browse nearby activities filtered by type, date, and distance
+- **Join Requests** — Request to join, scored by compatibility algorithm (shared interests, proximity, rating, history)
+- **Host Dashboard** — Approve/decline requests ranked by compatibility score, spots auto-update
+- **Ratings** — Rate participants 1-5 stars after activities end, anonymous, updates profile average
+- **Notifications** — Get notified when your request is approved or declined
+- **Public Profiles** — View other users' ratings, activity stats, and interests
+
+## Architecture
+
+```mermaid
+graph TB
+    subgraph Client
+        A[Next.js App Router] --> B[Server Components]
+        A --> C[Client Components]
+    end
+
+    subgraph API
+        D[API Routes /api/*]
+        D --> E[Auth - NextAuth v5]
+        D --> F[Business Logic - src/lib/]
+    end
+
+    subgraph Data
+        F --> G[Prisma ORM]
+        G --> H[(Neon PostgreSQL)]
+    end
+
+    subgraph External
+        E --> I[Google OAuth]
+        A --> J[Vercel Blob - Avatars]
+    end
+
+    B --> D
+    C --> D
+
+    style A fill:#FF2D9B,color:#fff
+    style H fill:#8B5CF6,color:#fff
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+```mermaid
+erDiagram
+    User ||--o{ Activity : hosts
+    User ||--o{ JoinRequest : submits
+    User ||--o{ Rating : gives
+    User ||--o{ Rating : receives
+    User ||--o{ Notification : has
+    Activity ||--o{ JoinRequest : has
+    Activity ||--o{ Rating : context
+    Activity {
+        string id PK
+        string title
+        string[] tags
+        datetime dateTime
+        string location
+        int maxSpots
+        enum status
+    }
+    User {
+        string id PK
+        string name
+        string email
+        string[] interests
+        float rating
+        int activityCount
+    }
+    JoinRequest {
+        string id PK
+        enum status
+        float compatibilityScore
+    }
+    Rating {
+        string id PK
+        int score
+    }
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Compatibility Scoring
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The core algorithm produces a 0-100 score per join request:
 
-## Learn More
+| Factor           | Weight | Description                                                |
+| ---------------- | ------ | ---------------------------------------------------------- |
+| Shared interests | 40%    | Overlap between requester interests and activity tags      |
+| Proximity        | 30%    | Haversine distance between requester and activity location |
+| User rating      | 20%    | Requester's average rating from past activities            |
+| Activity history | 10%    | Number of completed activities (reliability signal)        |
 
-To learn more about Next.js, take a look at the following resources:
+Edge cases: new users get a neutral default score, no tag overlap returns a minimum (not zero), self-join is rejected, full activities are blocked.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Tech Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Framework:** Next.js 16 (App Router)
+- **Language:** TypeScript (strict mode)
+- **Styling:** Tailwind CSS v4
+- **ORM:** Prisma 7
+- **Database:** Neon (PostgreSQL)
+- **Auth:** NextAuth.js v5 (JWT sessions)
+- **Deployment:** Vercel
+- **Testing:** Vitest (162 tests, 80%+ coverage) + Playwright (E2E)
+- **CI/CD:** GitHub Actions (lint, typecheck, tests, E2E, security, AI review)
 
-## Deploy on Vercel
+## Development
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm install
+npx prisma generate
+npm run dev          # Start dev server at localhost:3000
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+npm run test         # Run tests
+npm run test:coverage # Run with coverage (70% threshold)
+npm run lint         # ESLint
+npm run build        # Production build
+```
+
+### Seed data
+
+```bash
+npx tsx prisma/seed.ts                # Create test users + activities
+npx tsx prisma/seed-approve-test.ts   # Create test scenarios for approve/decline
+```
+
+Test accounts (password: `password123`): alex@test.com, jordan@test.com, sam@test.com, taylor@test.com, morgan@test.com, riley@test.com, casey@test.com
+
+## Claude Code Setup
+
+This project uses Claude Code extensively. The `.claude/` directory contains:
+
+- **CLAUDE.md** — Project conventions, architecture, testing strategy, security guidelines
+- **Skills** — `/fix-issue` (v2), `/create-pr` for standardized workflows
+- **Hooks** — PreToolUse (block protected files), PostToolUse (auto-lint), Stop (quality gate)
+- **Agents** — tdd-runner, code-reviewer, pr-validator, security-reviewer
+- **MCP** — GitHub MCP server for issue/PR management
+
+## Team
+
+Built by Stevi and teammate as a pair for the Production Application project.

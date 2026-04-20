@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useSearchParams, useRouter } from "next/navigation";
-import { ACTIVITY_TAGS } from "@/lib/tags";
+import { useSearchParams, useRouter } from 'next/navigation';
+import { ACTIVITY_TAGS } from '@/lib/tags';
 
 const DATE_PRESETS = [
-  { label: "Today", getValue: () => todayRange() },
-  { label: "This week", getValue: () => weekRange() },
-  { label: "This weekend", getValue: () => weekendRange() },
+  { label: 'Today', getValue: () => todayRange() },
+  { label: 'This week', getValue: () => weekRange() },
+  { label: 'This weekend', getValue: () => weekendRange() },
 ] as const;
 
 const DISTANCE_OPTIONS = [5, 10, 25, 50];
@@ -47,14 +47,15 @@ export default function FeedFilters({ hasLocation }: FeedFiltersProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const activeTags = searchParams.get("tags")?.split(",").filter(Boolean) ?? [];
-  const activeDatePreset = searchParams.get("datePreset") ?? null;
-  const activeDistance = searchParams.get("distanceKm")
-    ? Number(searchParams.get("distanceKm"))
+  const activeTags = searchParams.get('tags')?.split(',').filter(Boolean) ?? [];
+  const activeDatePreset = searchParams.get('datePreset') ?? null;
+  const activeDistance = searchParams.get('distanceKm')
+    ? Number(searchParams.get('distanceKm'))
     : null;
-  const customTagsActive = searchParams.get("customTags") === "true";
+  const customTagsActive = searchParams.get('customTags') === 'true';
 
-  const hasFilters = activeTags.length > 0 || activeDatePreset || activeDistance || customTagsActive;
+  const hasFilters =
+    activeTags.length > 0 || activeDatePreset || activeDistance || customTagsActive;
 
   function updateParams(updates: Record<string, string | null>) {
     const params = new URLSearchParams(searchParams.toString());
@@ -72,7 +73,7 @@ export default function FeedFilters({ hasLocation }: FeedFiltersProps) {
     const next = activeTags.includes(tag)
       ? activeTags.filter((t) => t !== tag)
       : [...activeTags, tag];
-    updateParams({ tags: next.length ? next.join(",") : null });
+    updateParams({ tags: next.length ? next.join(',') : null });
   }
 
   function setDatePreset(preset: string) {
@@ -95,46 +96,46 @@ export default function FeedFilters({ hasLocation }: FeedFiltersProps) {
   }
 
   function clearAll() {
-    router.replace("?", { scroll: false });
+    router.replace('?', { scroll: false });
   }
 
   const pillBase: React.CSSProperties = {
-    padding: "6px 14px",
-    borderRadius: "100px",
-    border: "1px solid var(--border)",
-    background: "var(--violet-bg)",
-    color: "var(--text-secondary)",
-    fontFamily: "var(--font-body)",
+    padding: '6px 14px',
+    borderRadius: '100px',
+    border: '1px solid var(--border)',
+    background: 'var(--violet-bg)',
+    color: 'var(--text-secondary)',
+    fontFamily: 'var(--font-body)',
     fontWeight: 600,
     fontSize: 12,
-    cursor: "pointer",
-    whiteSpace: "nowrap",
-    transition: "all 0.15s ease",
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+    transition: 'all 0.15s ease',
   };
 
   const pillActive: React.CSSProperties = {
     ...pillBase,
-    background: "linear-gradient(135deg, var(--fuchsia), var(--violet))",
-    color: "#fff",
-    border: "1px solid transparent",
+    background: 'linear-gradient(135deg, var(--fuchsia), var(--violet))',
+    color: '#fff',
+    border: '1px solid transparent',
   };
 
   const pillDisabled: React.CSSProperties = {
     ...pillBase,
     opacity: 0.4,
-    cursor: "not-allowed",
+    cursor: 'not-allowed',
   };
 
   return (
     <div
       style={{
-        background: "var(--surface)",
+        background: 'var(--surface)',
         borderRadius: 20,
-        border: "1px solid var(--border)",
-        padding: "16px 20px",
+        border: '1px solid var(--border)',
+        padding: '16px 20px',
         marginBottom: 16,
-        display: "flex",
-        flexDirection: "column",
+        display: 'flex',
+        flexDirection: 'column',
         gap: 14,
       }}
     >
@@ -142,18 +143,18 @@ export default function FeedFilters({ hasLocation }: FeedFiltersProps) {
       <div>
         <p
           style={{
-            fontFamily: "var(--font-body)",
+            fontFamily: 'var(--font-body)',
             fontSize: 11,
             fontWeight: 700,
-            color: "var(--text-muted)",
-            textTransform: "uppercase",
-            letterSpacing: "0.5px",
+            color: 'var(--text-muted)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
             marginBottom: 8,
           }}
         >
           Activity type
         </p>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           {ACTIVITY_TAGS.map((tag) => (
             <button
               key={tag}
@@ -164,7 +165,7 @@ export default function FeedFilters({ hasLocation }: FeedFiltersProps) {
             </button>
           ))}
           <button
-            onClick={() => updateParams({ customTags: customTagsActive ? null : "true" })}
+            onClick={() => updateParams({ customTags: customTagsActive ? null : 'true' })}
             style={customTagsActive ? pillActive : pillBase}
           >
             custom
@@ -176,18 +177,18 @@ export default function FeedFilters({ hasLocation }: FeedFiltersProps) {
       <div>
         <p
           style={{
-            fontFamily: "var(--font-body)",
+            fontFamily: 'var(--font-body)',
             fontSize: 11,
             fontWeight: 700,
-            color: "var(--text-muted)",
-            textTransform: "uppercase",
-            letterSpacing: "0.5px",
+            color: 'var(--text-muted)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
             marginBottom: 8,
           }}
         >
           When
         </p>
-        <div style={{ display: "flex", gap: 6 }}>
+        <div style={{ display: 'flex', gap: 6 }}>
           {DATE_PRESETS.map((preset) => (
             <button
               key={preset.label}
@@ -204,30 +205,24 @@ export default function FeedFilters({ hasLocation }: FeedFiltersProps) {
       <div>
         <p
           style={{
-            fontFamily: "var(--font-body)",
+            fontFamily: 'var(--font-body)',
             fontSize: 11,
             fontWeight: 700,
-            color: "var(--text-muted)",
-            textTransform: "uppercase",
-            letterSpacing: "0.5px",
+            color: 'var(--text-muted)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
             marginBottom: 8,
           }}
         >
           Distance
         </p>
-        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           {DISTANCE_OPTIONS.map((km) => (
             <button
               key={km}
               onClick={() => hasLocation && setDistance(km)}
               disabled={!hasLocation}
-              style={
-                !hasLocation
-                  ? pillDisabled
-                  : activeDistance === km
-                    ? pillActive
-                    : pillBase
-              }
+              style={!hasLocation ? pillDisabled : activeDistance === km ? pillActive : pillBase}
             >
               {km} km
             </button>
@@ -235,9 +230,9 @@ export default function FeedFilters({ hasLocation }: FeedFiltersProps) {
           {!hasLocation && (
             <span
               style={{
-                fontFamily: "var(--font-body)",
+                fontFamily: 'var(--font-body)',
                 fontSize: 11,
-                color: "var(--text-muted)",
+                color: 'var(--text-muted)',
               }}
             >
               Enable location in browser to use
@@ -251,16 +246,16 @@ export default function FeedFilters({ hasLocation }: FeedFiltersProps) {
         <button
           onClick={clearAll}
           style={{
-            alignSelf: "flex-start",
-            padding: "6px 14px",
-            borderRadius: "100px",
-            border: "none",
-            background: "transparent",
-            color: "var(--fuchsia)",
-            fontFamily: "var(--font-body)",
+            alignSelf: 'flex-start',
+            padding: '6px 14px',
+            borderRadius: '100px',
+            border: 'none',
+            background: 'transparent',
+            color: 'var(--fuchsia)',
+            fontFamily: 'var(--font-body)',
             fontWeight: 700,
             fontSize: 12,
-            cursor: "pointer",
+            cursor: 'pointer',
           }}
         >
           Clear all filters

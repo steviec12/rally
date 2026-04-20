@@ -26,18 +26,16 @@ const baseActivity: ScoringActivity = {
 describe('calculateCompatibilityScore', () => {
   describe('Group A — Rejection guards', () => {
     it('rejects self-join when requester is the host', () => {
-      const result = calculateCompatibilityScore(
-        { ...baseUser, id: 'host-1' },
-        baseActivity,
-      );
+      const result = calculateCompatibilityScore({ ...baseUser, id: 'host-1' }, baseActivity);
       expect(result).toEqual({ outcome: 'rejected', reason: 'self_join' });
     });
 
     it('rejects request when activity is full', () => {
-      const result = calculateCompatibilityScore(
-        baseUser,
-        { ...baseActivity, maxSpots: 3, approvedCount: 3 },
-      );
+      const result = calculateCompatibilityScore(baseUser, {
+        ...baseActivity,
+        maxSpots: 3,
+        approvedCount: 3,
+      });
       expect(result).toEqual({ outcome: 'rejected', reason: 'activity_full' });
     });
 
@@ -46,7 +44,7 @@ describe('calculateCompatibilityScore', () => {
       const result = calculateCompatibilityScore(
         baseUser,
         { ...baseActivity, dateTime: new Date('2025-06-01T11:59:59Z') },
-        now,
+        now
       );
       expect(result).toEqual({ outcome: 'rejected', reason: 'activity_expired' });
     });
@@ -54,7 +52,7 @@ describe('calculateCompatibilityScore', () => {
     it('self_join takes priority over activity_full', () => {
       const result = calculateCompatibilityScore(
         { ...baseUser, id: 'host-1' },
-        { ...baseActivity, maxSpots: 3, approvedCount: 3 },
+        { ...baseActivity, maxSpots: 3, approvedCount: 3 }
       );
       expect(result).toEqual({ outcome: 'rejected', reason: 'self_join' });
     });
@@ -93,7 +91,7 @@ describe('calculateCompatibilityScore', () => {
     it('no tag match produces zero tag contribution but non-zero total', () => {
       const result = calculateCompatibilityScore(
         { ...maxUser, interests: ['gaming'] },
-        maxActivity,
+        maxActivity
       );
       assert(result.outcome === 'scored');
       expect(result.breakdown.tagScore).toBe(0);
@@ -103,26 +101,20 @@ describe('calculateCompatibilityScore', () => {
     it('partial tag match (1 of 2 activity tags) produces proportional tag score (20)', () => {
       const result = calculateCompatibilityScore(
         { ...maxUser, interests: ['basketball', 'gaming'] },
-        maxActivity,
+        maxActivity
       );
       assert(result.outcome === 'scored');
       expect(result.breakdown.tagScore).toBe(20);
     });
 
     it('empty activity tags gives full tag credit', () => {
-      const result = calculateCompatibilityScore(
-        maxUser,
-        { ...maxActivity, tags: [] },
-      );
+      const result = calculateCompatibilityScore(maxUser, { ...maxActivity, tags: [] });
       assert(result.outcome === 'scored');
       expect(result.breakdown.tagScore).toBe(40);
     });
 
     it('empty requester interests with non-empty activity tags gives zero tag score', () => {
-      const result = calculateCompatibilityScore(
-        { ...maxUser, interests: [] },
-        maxActivity,
-      );
+      const result = calculateCompatibilityScore({ ...maxUser, interests: [] }, maxActivity);
       assert(result.outcome === 'scored');
       expect(result.breakdown.tagScore).toBe(0);
     });
@@ -139,7 +131,7 @@ describe('calculateCompatibilityScore', () => {
       // ~50 km north of Los Angeles along same longitude
       const result = calculateCompatibilityScore(
         { ...maxUser, locationLat: 34.0522, locationLng: -118.2437 },
-        { ...maxActivity, locationLat: 34.5018, locationLng: -118.2437 },
+        { ...maxActivity, locationLat: 34.5018, locationLng: -118.2437 }
       );
       assert(result.outcome === 'scored');
       expect(result.breakdown.proximityScore).toBeCloseTo(0, 1);
@@ -149,7 +141,7 @@ describe('calculateCompatibilityScore', () => {
       // ~100 km north
       const result = calculateCompatibilityScore(
         { ...maxUser, locationLat: 34.0522, locationLng: -118.2437 },
-        { ...maxActivity, locationLat: 34.9514, locationLng: -118.2437 },
+        { ...maxActivity, locationLat: 34.9514, locationLng: -118.2437 }
       );
       assert(result.outcome === 'scored');
       expect(result.breakdown.proximityScore).toBe(0);
@@ -159,7 +151,7 @@ describe('calculateCompatibilityScore', () => {
       // ~25 km north
       const result = calculateCompatibilityScore(
         { ...maxUser, locationLat: 34.0522, locationLng: -118.2437 },
-        { ...maxActivity, locationLat: 34.2770, locationLng: -118.2437 },
+        { ...maxActivity, locationLat: 34.277, locationLng: -118.2437 }
       );
       assert(result.outcome === 'scored');
       expect(result.breakdown.proximityScore).toBeCloseTo(15, 0);
@@ -174,28 +166,19 @@ describe('calculateCompatibilityScore', () => {
     });
 
     it('rating of 1 produces zero rating contribution', () => {
-      const result = calculateCompatibilityScore(
-        { ...maxUser, rating: 1 },
-        maxActivity,
-      );
+      const result = calculateCompatibilityScore({ ...maxUser, rating: 1 }, maxActivity);
       assert(result.outcome === 'scored');
       expect(result.breakdown.ratingScore).toBe(0);
     });
 
     it('rating of 3 produces half rating contribution (10)', () => {
-      const result = calculateCompatibilityScore(
-        { ...maxUser, rating: 3 },
-        maxActivity,
-      );
+      const result = calculateCompatibilityScore({ ...maxUser, rating: 3 }, maxActivity);
       assert(result.outcome === 'scored');
       expect(result.breakdown.ratingScore).toBe(10);
     });
 
     it('null rating (new user) produces neutral rating contribution (10)', () => {
-      const result = calculateCompatibilityScore(
-        { ...maxUser, rating: null },
-        maxActivity,
-      );
+      const result = calculateCompatibilityScore({ ...maxUser, rating: null }, maxActivity);
       assert(result.outcome === 'scored');
       expect(result.breakdown.ratingScore).toBe(10);
     });
@@ -203,10 +186,7 @@ describe('calculateCompatibilityScore', () => {
     // --- Activity count factor ---
 
     it('zero activity count produces zero history contribution', () => {
-      const result = calculateCompatibilityScore(
-        { ...maxUser, activityCount: 0 },
-        maxActivity,
-      );
+      const result = calculateCompatibilityScore({ ...maxUser, activityCount: 0 }, maxActivity);
       assert(result.outcome === 'scored');
       expect(result.breakdown.activityCountScore).toBe(0);
     });
@@ -218,19 +198,13 @@ describe('calculateCompatibilityScore', () => {
     });
 
     it('activity count beyond cap (50) is clamped to full history contribution (10)', () => {
-      const result = calculateCompatibilityScore(
-        { ...maxUser, activityCount: 50 },
-        maxActivity,
-      );
+      const result = calculateCompatibilityScore({ ...maxUser, activityCount: 50 }, maxActivity);
       assert(result.outcome === 'scored');
       expect(result.breakdown.activityCountScore).toBe(10);
     });
 
     it('activity count at midpoint (10) produces half history contribution (5)', () => {
-      const result = calculateCompatibilityScore(
-        { ...maxUser, activityCount: 10 },
-        maxActivity,
-      );
+      const result = calculateCompatibilityScore({ ...maxUser, activityCount: 10 }, maxActivity);
       assert(result.outcome === 'scored');
       expect(result.breakdown.activityCountScore).toBe(5);
     });
@@ -266,7 +240,7 @@ describe('calculateCompatibilityScore', () => {
     it('new user with no history and no tag match produces a non-zero total', () => {
       const result = calculateCompatibilityScore(
         { ...maxUser, rating: null, activityCount: 0, interests: ['gaming'] },
-        maxActivity,
+        maxActivity
       );
       assert(result.outcome === 'scored');
       expect(result.breakdown.total).toBeGreaterThan(0);
@@ -275,7 +249,7 @@ describe('calculateCompatibilityScore', () => {
     it('total equals sum of the four weighted contributions', () => {
       const result = calculateCompatibilityScore(
         { ...maxUser, rating: 3, activityCount: 10, interests: ['basketball'] },
-        maxActivity,
+        maxActivity
       );
       assert(result.outcome === 'scored');
       const { total, tagScore, proximityScore, ratingScore, activityCountScore } = result.breakdown;
@@ -283,10 +257,11 @@ describe('calculateCompatibilityScore', () => {
     });
 
     it('one spot remaining allows scoring to proceed', () => {
-      const result = calculateCompatibilityScore(
-        maxUser,
-        { ...maxActivity, maxSpots: 3, approvedCount: 2 },
-      );
+      const result = calculateCompatibilityScore(maxUser, {
+        ...maxActivity,
+        maxSpots: 3,
+        approvedCount: 2,
+      });
       expect(result.outcome).toBe('scored');
     });
 
@@ -295,7 +270,7 @@ describe('calculateCompatibilityScore', () => {
       const result = calculateCompatibilityScore(
         maxUser,
         { ...maxActivity, dateTime: new Date('2025-06-01T12:00:01Z') },
-        now,
+        now
       );
       expect(result.outcome).toBe('scored');
     });
@@ -305,7 +280,7 @@ describe('calculateCompatibilityScore', () => {
       const result = calculateCompatibilityScore(
         maxUser,
         { ...maxActivity, dateTime: new Date('2025-06-01T11:59:59Z') },
-        now,
+        now
       );
       expect(result).toEqual({ outcome: 'rejected', reason: 'activity_expired' });
     });
@@ -334,10 +309,11 @@ describe('Group D — Regression / combination cases', () => {
   };
 
   it('max profile, full tag match, but at proximity cap (~50 km) → total is ~70', () => {
-    const result = calculateCompatibilityScore(
-      maxUser,
-      { ...maxActivity, locationLat: 34.5018, locationLng: -118.2437 },
-    );
+    const result = calculateCompatibilityScore(maxUser, {
+      ...maxActivity,
+      locationLat: 34.5018,
+      locationLng: -118.2437,
+    });
     assert(result.outcome === 'scored');
     expect(result.breakdown.tagScore).toBe(40);
     expect(result.breakdown.proximityScore).toBeCloseTo(0, 1);
@@ -349,7 +325,7 @@ describe('Group D — Regression / combination cases', () => {
   it('new user (null rating, zero history), full tag match, same location → total is 80', () => {
     const result = calculateCompatibilityScore(
       { ...maxUser, rating: null, activityCount: 0 },
-      maxActivity,
+      maxActivity
     );
     assert(result.outcome === 'scored');
     expect(result.breakdown.tagScore).toBe(40);

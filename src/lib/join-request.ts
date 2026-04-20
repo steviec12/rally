@@ -1,7 +1,7 @@
-import { db } from "@/lib/db";
-import { calculateCompatibilityScore } from "@/lib/scoring";
-import type { ScoringUser, ScoringActivity, RejectionReason } from "@/types/scoring";
-import type { JoinRequestResult, UpdateJoinRequestResult } from "@/types/join-request";
+import { db } from '@/lib/db';
+import { calculateCompatibilityScore } from '@/lib/scoring';
+import type { ScoringUser, ScoringActivity, RejectionReason } from '@/types/scoring';
+import type { JoinRequestResult, UpdateJoinRequestResult } from '@/types/join-request';
 
 export type { JoinRequestResult, UpdateJoinRequestResult };
 
@@ -62,8 +62,12 @@ function toScoringActivity(activity: DbActivity): ScoringActivity {
 }
 
 function isUniqueConstraintError(error: unknown): boolean {
-  return typeof error === "object" && error !== null && "code" in error
-    && (error as { code: unknown }).code === "P2002";
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code: unknown }).code === 'P2002'
+  );
 }
 
 const JOIN_REQUEST_SELECT = {
@@ -79,7 +83,7 @@ const JOIN_REQUEST_SELECT = {
 export async function getJoinRequestsForHost(activityId: string) {
   return db.joinRequest.findMany({
     where: { activityId },
-    orderBy: { compatibilityScore: "desc" as const },
+    orderBy: { compatibilityScore: 'desc' as const },
     select: JOIN_REQUEST_SELECT,
   });
 }
@@ -87,8 +91,8 @@ export async function getJoinRequestsForHost(activityId: string) {
 export async function updateJoinRequestStatus(
   joinRequestId: string,
   hostUserId: string,
-  newStatus: "approved" | "declined",
-  expectedActivityId?: string,
+  newStatus: 'approved' | 'declined',
+  expectedActivityId?: string
 ): Promise<UpdateJoinRequestResult> {
   const joinRequest = await db.joinRequest.findUnique({
     where: { id: joinRequestId },
@@ -96,7 +100,7 @@ export async function updateJoinRequestStatus(
       activity: {
         include: {
           _count: {
-            select: { joinRequests: { where: { status: "approved" } } },
+            select: { joinRequests: { where: { status: 'approved' } } },
           },
         },
       },
@@ -104,38 +108,38 @@ export async function updateJoinRequestStatus(
   });
 
   if (!joinRequest) {
-    return { success: false, error: "Join request not found.", status: 404 };
+    return { success: false, error: 'Join request not found.', status: 404 };
   }
 
   if (expectedActivityId && joinRequest.activityId !== expectedActivityId) {
-    return { success: false, error: "Join request does not belong to this activity.", status: 404 };
+    return { success: false, error: 'Join request does not belong to this activity.', status: 404 };
   }
 
   if (joinRequest.activity.hostId !== hostUserId) {
     return {
       success: false,
-      error: "Only the activity host can update join requests.",
+      error: 'Only the activity host can update join requests.',
       status: 403,
     };
   }
 
-  if (joinRequest.status !== "pending") {
+  if (joinRequest.status !== 'pending') {
     return {
       success: false,
-      error: "This join request has already been resolved.",
+      error: 'This join request has already been resolved.',
       status: 409,
     };
   }
 
   if (
-    newStatus === "approved" &&
+    newStatus === 'approved' &&
     joinRequest.activity._count.joinRequests >= joinRequest.activity.maxSpots
   ) {
-    return { success: false, error: "This activity is full.", status: 409 };
+    return { success: false, error: 'This activity is full.', status: 409 };
   }
 
   const shouldMarkFull =
-    newStatus === "approved" &&
+    newStatus === 'approved' &&
     joinRequest.activity._count.joinRequests + 1 >= joinRequest.activity.maxSpots;
 
   if (shouldMarkFull) {
@@ -146,7 +150,7 @@ export async function updateJoinRequestStatus(
       }),
       db.activity.update({
         where: { id: joinRequest.activity.id },
-        data: { status: "full" },
+        data: { status: 'full' },
       }),
     ]);
   } else {
@@ -159,7 +163,7 @@ export async function updateJoinRequestStatus(
   await db.notification.create({
     data: {
       userId: joinRequest.userId,
-      type: newStatus === "approved" ? "request_approved" : "request_declined",
+      type: newStatus === 'approved' ? 'request_approved' : 'request_declined',
       activityId: joinRequest.activityId,
     },
   });
@@ -169,12 +173,12 @@ export async function updateJoinRequestStatus(
 
 export async function createJoinRequest(
   activityId: string,
-  userId: string,
+  userId: string
 ): Promise<JoinRequestResult> {
   const [activity, user] = await Promise.all([
     db.activity.findUnique({
       where: { id: activityId },
-      include: { _count: { select: { joinRequests: { where: { status: "approved" } } } } },
+      include: { _count: { select: { joinRequests: { where: { status: 'approved' } } } } },
     }),
     db.user.findUnique({
       where: { id: userId },
@@ -190,27 +194,27 @@ export async function createJoinRequest(
   ]);
 
   if (!activity) {
-    return { success: false, error: "Activity not found.", status: 404 };
+    return { success: false, error: 'Activity not found.', status: 404 };
   }
 
   if (!user) {
-    return { success: false, error: "User not found.", status: 404 };
+    return { success: false, error: 'User not found.', status: 404 };
   }
 
-  if (activity.status === "cancelled") {
-    return { success: false, error: "This activity has been cancelled.", status: 409 };
+  if (activity.status === 'cancelled') {
+    return { success: false, error: 'This activity has been cancelled.', status: 409 };
   }
 
-  if (activity.status === "full") {
-    return { success: false, error: "This activity is full.", status: 409 };
+  if (activity.status === 'full') {
+    return { success: false, error: 'This activity is full.', status: 409 };
   }
 
   const result = calculateCompatibilityScore(
     toScoringUser(user),
-    toScoringActivity(activity as DbActivity),
+    toScoringActivity(activity as DbActivity)
   );
 
-  if (result.outcome === "rejected") {
+  if (result.outcome === 'rejected') {
     return { success: false, ...mapRejectionToError(result.reason) };
   }
 
@@ -235,7 +239,7 @@ export async function createJoinRequest(
     if (isUniqueConstraintError(error)) {
       return {
         success: false,
-        error: "You have already requested to join this activity.",
+        error: 'You have already requested to join this activity.',
         status: 409,
       };
     }

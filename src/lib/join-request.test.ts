@@ -267,7 +267,7 @@ describe('createJoinRequest', () => {
 
     expect(mockedScore).toHaveBeenCalledWith(
       expect.objectContaining({ locationLat: 0, locationLng: 0 }),
-      expect.anything(),
+      expect.anything()
     );
   });
 
@@ -300,7 +300,7 @@ describe('createJoinRequest', () => {
 
     expect(mockedScore).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ approvedCount: 3 }),
+      expect.objectContaining({ approvedCount: 3 })
     );
   });
 

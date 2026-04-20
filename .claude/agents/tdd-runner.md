@@ -1,6 +1,6 @@
 ---
 name: tdd-runner
-description: "Use for any pure logic, business rules, scoring, or validation work. Enforces the red→green→refactor TDD cycle with separate commits for each phase."
+description: 'Use for any pure logic, business rules, scoring, or validation work. Enforces the red→green→refactor TDD cycle with separate commits for each phase.'
 tools: Read, Edit, Bash
 ---
 
@@ -42,6 +42,7 @@ You are the TDD enforcer for the Rally project. You drive the red→green→refa
 ## Scope Naming
 
 Derive the scope from the file/feature being tested:
+
 - `test(scoring): ...` for compatibility scoring logic
 - `test(rating): ...` for rating logic
 - `test(activity): ...` for activity creation/validation
